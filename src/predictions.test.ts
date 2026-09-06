@@ -1,6 +1,6 @@
 // The experiment's headless predictions, filed in the plan before this file existed.
 import { describe, expect, it } from "vitest"
-import { flat, project, type View } from "./project.ts"
+import { flat, project, type VerbView } from "./project.ts"
 import { compose } from "./register.ts"
 import { applyTaste, type Taste } from "./taste.ts"
 import { kindOf, type Verb } from "./verb.ts"
@@ -11,17 +11,17 @@ describe("prediction one — the union needs no new word", () => {
     // @sibar/verbs — Verb
     "sibar.Verb.id": "Verb.id", "sibar.Verb.affects": "Verb[extra] (a REST host's extension)", "sibar.Verb.enabled": "Verb.enabled (now boolean | undefined)",
     "sibar.Verb.unavailable": "Verb.unavailable", "sibar.Verb.read": "Verb.read", "sibar.Verb.appliesTo": "Verb.appliesTo", "sibar.Verb.args": "Verb.args",
-    "sibar.Verb.run": "Verb.run", "sibar.Verb.danger": "Verb[extra] → View[attr]", "sibar.Verb.heavy": "Verb[extra] → View[attr]",
-    "sibar.Verb.placeholder": "Verb[extra] → View[attr]", "sibar.Verb.collector": "Verb[extra] → View[attr]",
+    "sibar.Verb.run": "Verb.run", "sibar.Verb.danger": "Verb[extra] → VerbView[attr]", "sibar.Verb.heavy": "Verb[extra] → VerbView[attr]",
+    "sibar.Verb.placeholder": "Verb[extra] → VerbView[attr]", "sibar.Verb.collector": "Verb[extra] → VerbView[attr]",
     // @sibar/verbs — VerbArg
     "sibar.VerbArg.id": "VerbArg.name (rename)", "sibar.VerbArg.label": "VerbArg[extra] (taste)", "sibar.VerbArg.domain": "VerbArg.domain as a name",
     "sibar.VerbArg.required": "VerbArg.required", "sibar.VerbArg.input": "VerbArg.type (rename)",
     // @sibar/model — VerbView
-    "sibar.VerbView.id": "View.id", "sibar.VerbView.label": "View.label", "sibar.VerbView.icon": "View.icon", "sibar.VerbView.kind": "View.kind",
-    "sibar.VerbView.enabled": "View.enabled (absent when unspoken)", "sibar.VerbView.pending": "View.pending", "sibar.VerbView.pressed": "View.pressed",
-    "sibar.VerbView.reason": "View.reason", "sibar.VerbView.description": "View[attr] (taste)", "sibar.VerbView.appliesTo": "View.appliesTo",
-    "sibar.VerbView.danger": "View[attr]", "sibar.VerbView.heavy": "View[attr]", "sibar.VerbView.shortcut": "View.shortcut", "sibar.VerbView.placeholder": "View[attr]",
-    "sibar.VerbView.args": "View.args", "sibar.VerbView.collector": "View[attr]", "sibar.VerbGroupView": "Group",
+    "sibar.VerbView.id": "VerbView.id", "sibar.VerbView.label": "VerbView.label", "sibar.VerbView.icon": "VerbView.icon", "sibar.VerbView.kind": "VerbView.kind",
+    "sibar.VerbView.enabled": "VerbView.enabled (absent when unspoken)", "sibar.VerbView.pending": "VerbView.pending", "sibar.VerbView.pressed": "VerbView.pressed",
+    "sibar.VerbView.reason": "VerbView.reason", "sibar.VerbView.description": "VerbView[attr] (taste)", "sibar.VerbView.appliesTo": "VerbView.appliesTo",
+    "sibar.VerbView.danger": "VerbView[attr]", "sibar.VerbView.heavy": "VerbView[attr]", "sibar.VerbView.shortcut": "VerbView.shortcut", "sibar.VerbView.placeholder": "VerbView[attr]",
+    "sibar.VerbView.args": "VerbView.args", "sibar.VerbView.collector": "VerbView[attr]", "sibar.VerbGroupView": "Group",
     // @sibar/verbs — Effect: not a register concern; the host's `Run` type carries what `run` returns
     "sibar.Effect": "Run (the host's own type parameter)",
     // prosemirror-verbs — Capability / VerbEntry / Verb
@@ -35,10 +35,10 @@ describe("prediction one — the union needs no new word", () => {
     "pm.AttrLayer.name": "Layer.name", "pm.AttrLayer.match": "Layer.where (data, not a predicate)", "pm.AttrLayer.attrs": "Layer.attrs (literal or named Derivation)",
     "pm.Attributed.describe": "Attributed.describe", "pm.Attributed.audit": "Attributed.audit", "pm.namingLayer": "NAMING",
     // prosemirror-verbs — ControlSpec / tree
-    "pm.ControlSpec.kind": "View.kind", "pm.ControlSpec.as": "View.as", "pm.ControlSpec.label": "View.label", "pm.ControlSpec.title": "View[attr] (taste)",
-    "pm.ControlSpec.icon": "View.icon", "pm.ControlSpec.command": "not projected: a View holds no function; the host runs by id", "pm.ControlSpec.active": "View.pressed",
-    "pm.ControlSpec.value": "View.value", "pm.ControlSpec.write": "not projected: the host runs by id with args", "pm.ControlSpec.options": "View.args[0].domain",
-    "pm.ControlSpec.type": "View.args[0].type", "pm.ControlSpec.keys": "View.shortcut (formatted) + View[attr] keys", "pm.ControlSpec.group": "View.section",
+    "pm.ControlSpec.kind": "VerbView.kind", "pm.ControlSpec.as": "VerbView.as", "pm.ControlSpec.label": "VerbView.label", "pm.ControlSpec.title": "VerbView[attr] (taste)",
+    "pm.ControlSpec.icon": "VerbView.icon", "pm.ControlSpec.command": "not projected: a VerbView holds no function; the host runs by id", "pm.ControlSpec.active": "VerbView.pressed",
+    "pm.ControlSpec.value": "VerbView.value", "pm.ControlSpec.write": "not projected: the host runs by id with args", "pm.ControlSpec.options": "VerbView.args[0].domain",
+    "pm.ControlSpec.type": "VerbView.args[0].type", "pm.ControlSpec.keys": "VerbView.shortcut (formatted) + VerbView[attr] keys", "pm.ControlSpec.group": "VerbView.section",
     "pm.GroupSpec": "Section", "pm.ControlGroup": "Group", "pm.FaceRule": "Face",
     // Nodemirror — the action catalogue and the label map
     "nm.ActionSchema.type": "Verb.id", "nm.ActionSchema.maxSelection": "Verb[extra] (the host's arity)", "nm.ActionSchema.payload": "Verb.args (one per payload field, type from the cell)",
@@ -55,7 +55,7 @@ describe("prediction one — the union needs no new word", () => {
       affects: [{ type: "documents" }], danger: true, heavy: false, placeholder: true, collector: "sign-deck",
       label: "Firma", icon: "approval", as: "button", keys: ["Mod-Shift-f"], keywords: ["firmare"], group: "approval", description: "Appone la firma.",
     }
-    const [v] = flat(project(compose(everything), undefined, applyTaste(compose(everything), {}), { of: 7, platform: "mac" })) as [View]
+    const [v] = flat(project(compose(everything), undefined, applyTaste(compose(everything), {}), { of: 7, platform: "mac" })) as [VerbView]
     expect(v).toMatchObject({ id: "document:sign", kind: "value", label: "Firma", icon: "approval", enabled: true, appliesTo: { n: 3, of: 7 }, shortcut: "⌘⇧F", danger: true, placeholder: true, collector: "sign-deck", keywords: ["firmare"] })
   })
 })

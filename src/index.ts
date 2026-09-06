@@ -11,7 +11,7 @@ export { applyTaste, humanize, NAMING } from "./taste.ts"
 export type { Taste, Attrs, Layer, Where, Derivation, Derivations, Section, Claim, Attributed } from "./taste.ts"
 
 export { project, flat, isGroup } from "./project.ts"
-export type { View, ArgView, Group, TreeItem, Face, ProjectOptions } from "./project.ts"
+export type { VerbView, ArgView, Group, TreeItem, Face, ProjectOptions } from "./project.ts"
 
 export { formatChord } from "./chord.ts"
 export type { Platform } from "./chord.ts"
