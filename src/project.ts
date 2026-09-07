@@ -13,7 +13,7 @@ import { kindOf, type Kind, type Verb } from "./verb.ts"
  * and not yet spoken (no key) — the authority abstained, and so does the view. A surface styles
  * silence; it never invents a zero.
  */
-export interface VerbView {
+export interface Control {
   readonly id: string
   /** What it is — deduced, closed. */
   readonly kind: Kind
@@ -58,7 +58,7 @@ export interface Group {
   readonly [attr: string]: unknown
 }
 
-export type TreeItem = VerbView | Group
+export type TreeItem = Control | Group
 
 /** `true` for a {@link Group}. */
 export function isGroup(item: TreeItem): item is Group {
@@ -85,7 +85,7 @@ export interface ProjectOptions {
 
 const DEFAULT_AS: Readonly<Record<Kind, string>> = { action: "button", toggle: "button", choice: "select", value: "field" }
 
-function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: ProjectOptions): VerbView | null {
+function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: ProjectOptions): Control | null {
   const attrs = taste.attrsOf(verb.id)
   const kind = kindOf(verb as Verb<never, unknown, never>)
   const icon = typeof attrs["icon"] === "string" ? attrs["icon"] : undefined
@@ -120,7 +120,7 @@ function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: 
 }
 
 /**
- * The register, seen from a surface: every verb the context admits, as {@link VerbView}s, laid into
+ * The register, seen from a surface: every verb the context admits, as {@link Control}s, laid into
  * the taste's sections. A group with no visible member is dropped, not rendered empty — the
  * headings are part of the projection, not of the chrome. Verbs no section claims trail the sections at their level.
  * Pure: `(register, ctx, taste, options)` in, JSON out, nothing else touched.
@@ -131,12 +131,12 @@ export function project<Ctx, Run>(
   taste: Attributed,
   options: ProjectOptions = {},
 ): readonly TreeItem[] {
-  const views: VerbView[] = []
+  const views: Control[] = []
   for (const verb of register.verbs) {
     const v = toView(verb, ctx, taste, options)
     if (v) views.push(v)
   }
-  const bySection = new Map<string | undefined, VerbView[]>()
+  const bySection = new Map<string | undefined, Control[]>()
   for (const v of views) bySection.set(v.section, [...(bySection.get(v.section) ?? []), v])
 
   const build = (parent: string | undefined): TreeItem[] => {
@@ -157,6 +157,6 @@ export function project<Ctx, Run>(
 }
 
 /** The flat list, for a surface with no sections. */
-export function flat(tree: readonly TreeItem[]): readonly VerbView[] {
+export function flat(tree: readonly TreeItem[]): readonly Control[] {
   return tree.flatMap((item) => (isGroup(item) ? flat(item.items) : [item]))
 }

@@ -84,7 +84,7 @@ import { project, flat } from "verbr"
 const tree = project(register, ctx, taste, { face: "icon", platform: "mac", includeUnavailable: false })
 ```
 
-The register, seen from a surface, as plain JSON: sections with their members, each member a `VerbView` with `kind`, `as`, `label`, `icon`, the three-valued `enabled`, `reason`, `pending`, `pressed` or `value`, `appliesTo`, a formatted `shortcut`, `args`, and every other taste attribute carried through. No function anywhere, so `JSON.stringify(tree)` is already an agent's tool manifest. A toolbar, a palette, a menu and a test read the same object and cannot disagree about what is available.
+The register, seen from a surface, as plain JSON: sections with their members, each member a `Control` with `kind`, `as`, `label`, `icon`, the three-valued `enabled`, `reason`, `pending`, `pressed` or `value`, `appliesTo`, a formatted `shortcut`, `args`, and every other taste attribute carried through. No function anywhere, so `JSON.stringify(tree)` is already an agent's tool manifest. A toolbar, a palette, a menu and a test read the same object and cannot disagree about what is available.
 
 A group with no visible member is dropped. Withheld verbs are dropped unless `includeUnavailable` asks for them with their reasons: a menu explains, a toolbar acts. `face: "icon"` is a strip's rule, no picture no control; `words` is the floor.
 
