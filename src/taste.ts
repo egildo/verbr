@@ -1,4 +1,4 @@
-import { CAPABILITY_KEYS, domainOf, kindOf, type Kind, type Verb } from "./verb.ts"
+import { CAPABILITY_KEYS, PROJECTED_KEYS, kindOf, type Kind, type Verb } from "./verb.ts"
 import type { Register } from "./register.ts"
 
 /**
@@ -131,7 +131,7 @@ function matches(where: Where | undefined, verb: Verb<never, unknown, never>, re
 /**
  * Apply taste to a register. The cascade is `NAMING`, then for each document its `verbs` section
  * (one layer of per-id claims) and then its `layers`, in order; later wins per key. Throws at build
- * for a layer that reaches a capability key or names a derivation the host does not hold — a
+ * for a layer that reaches a capability key or a projected key, or names a derivation the host does not hold — a
  * closed vocabulary with a loud diagnostic, never a silent guess.
  */
 export function applyTaste<Ctx, Run>(
@@ -154,6 +154,7 @@ export function applyTaste<Ctx, Run>(
     for (const bag of bags) {
       for (const [key, value] of Object.entries(bag)) {
         if (CAPABILITY_KEYS.has(key)) throw new Error(`taste layer "${court.name}" reaches capability key "${key}" — taste may rename a verb, never redefine what it does`)
+        if (PROJECTED_KEYS.has(key)) throw new Error(`taste layer "${court.name}" reaches projected key "${key}" — the projection reads it from the context, taste may not state it`)
         if (isDerivation(value) && !(value.derive in derive)) throw new Error(`taste layer "${court.name}" names unknown derivation "${value.derive}"`)
       }
     }
@@ -166,6 +167,7 @@ export function applyTaste<Ctx, Run>(
     let resolved: Record<string, unknown> = {}
     // The declaration's own taste is the floor: whatever the declarer carried beyond the capability keys.
     for (const [key, value] of Object.entries(verb)) {
+      if (PROJECTED_KEYS.has(key)) throw new Error(`verb "${verb.id}" declares projected key "${key}" — the projection reads it from the context`)
       if (!CAPABILITY_KEYS.has(key)) { resolved[key] = value; mine.push({ layer: "declared", key, value, wins: true }) }
     }
     for (const court of courts) {
@@ -203,5 +205,3 @@ export function applyTaste<Ctx, Run>(
     sections: [...sections.values()],
   }
 }
-
-export { domainOf }

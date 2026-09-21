@@ -33,7 +33,7 @@ export interface Control {
   readonly value?: unknown
   /** «3 of 7» — only when a selection is partial. */
   readonly appliesTo?: { readonly n: number; readonly of: number }
-  /** The first chord, formatted for the platform asked. */
+  /** The first chord, formatted for the platform asked. The chords themselves ride along as the `keys` attribute. */
   readonly shortcut?: string
   readonly args?: readonly ArgView[]
   /** The section this verb sits in, when taste placed it. */
@@ -99,7 +99,7 @@ function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: 
   const keys = attrs["keys"]
   const first = Array.isArray(keys) ? keys[0] : typeof keys === "string" ? keys : undefined
 
-  const { label: _l, icon: _i, as: _a, keys: _k, section: _s, ...rest } = attrs
+  const { label: _l, icon: _i, as: _a, section: _s, ...rest } = attrs
   return {
     ...rest,
     id: verb.id,

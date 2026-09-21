@@ -65,6 +65,11 @@ describe("refusals — loud, at build", () => {
     expect(() => applyTaste(reg, { layers: [{ name: "evil", attrs: { enabled: true } }] })).toThrow(/capability key "enabled"/)
     expect(() => applyTaste(reg, { verbs: { strong: { run: 1 } } })).toThrow(/capability key "run"/)
   })
+  it("neither a layer nor a declaration may state what the projection reads", () => {
+    expect(() => applyTaste(reg, { verbs: { strong: { pressed: true } } })).toThrow(/projected key "pressed"/)
+    expect(() => applyTaste(reg, { layers: [{ name: "evil", attrs: { reason: "lies" } }] })).toThrow(/projected key "reason"/)
+    expect(() => applyTaste(compose({ id: "x", run: () => 0, pending: true }), {})).toThrow(/declares projected key "pending"/)
+  })
   it("an unknown derivation is refused, a known one resolves", () => {
     expect(() => applyTaste(reg, { layers: [{ name: "d", attrs: { label: { derive: "shout" } } }] })).toThrow(/unknown derivation "shout"/)
     const t = applyTaste(reg, { layers: [{ name: "d", attrs: { title: { derive: "shout" } } }] }, { shout: (v) => v.id.toUpperCase() })

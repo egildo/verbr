@@ -38,7 +38,7 @@ describe("the three states of enabled", () => {
 describe("what a view carries", () => {
   it("kind deduced, as defaulted from kind, label from taste or naming, shortcut formatted", () => {
     const [sell] = flat(project(reg, { offered: ["sell"], status: "open" }, taste, { platform: "mac" }))
-    expect(sell).toMatchObject({ id: "sell", kind: "action", as: "button", label: "Accept leading bid", icon: "check", shortcut: "⌘↵", section: "closing" })
+    expect(sell).toMatchObject({ id: "sell", kind: "action", as: "button", label: "Accept leading bid", icon: "check", shortcut: "⌘↵", keys: ["Mod-Enter"], section: "closing" })
     const [place] = flat(project(reg, { offered: ["place"], status: "open" }, taste))
     expect(place).toMatchObject({ kind: "value", as: "field", label: "Place", args: [{ name: "amount", type: "number" }] })
   })

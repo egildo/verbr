@@ -73,7 +73,7 @@ taste.describe("sell", "manner")  // every claim, in order, the winner marked
 taste.audit()                     // every (verb, key) more than one layer claimed
 ```
 
-A cascade owes sight, not refusal. Two things are refused, at build and loudly: a layer that reaches a capability key, because taste may rename a verb but never redefine what it does, and a derivation the host does not hold.
+A cascade owes sight, not refusal. Three things are refused, at build and loudly: a layer that reaches a capability key, because taste may rename a verb but never redefine what it does; a layer or a declaration that states a key the projection reads from the context (`kind`, `pressed`, `value`, `reason`, `pending`, `shortcut`), because a state nobody read is a lie on a surface; and a derivation the host does not hold.
 
 The naming default is itself a layer, seated first, matching only where no label exists, visible in `describe` and overridable by anything: `table:add-row-after` reads "Add row after" until someone says otherwise.
 
@@ -84,7 +84,7 @@ import { project, flat } from "verbr"
 const tree = project(register, ctx, taste, { face: "icon", platform: "mac", includeUnavailable: false })
 ```
 
-The register, seen from a surface, as plain JSON: sections with their members, each member a `Control` with `kind`, `as`, `label`, `icon`, the three-valued `enabled`, `reason`, `pending`, `pressed` or `value`, `appliesTo`, a formatted `shortcut`, `args`, and every other taste attribute carried through. No function anywhere, so `JSON.stringify(tree)` is already an agent's tool manifest. A toolbar, a palette, a menu and a test read the same object and cannot disagree about what is available.
+The register, seen from a surface, as plain JSON: sections with their members, each member a `Control` with `kind`, `as`, `label`, `icon`, the three-valued `enabled`, `reason`, `pending`, `pressed` or `value`, `appliesTo`, a formatted `shortcut`, `args`, and every other taste attribute carried through, `keys` included, so a surface can bind the chords it displays. No function anywhere, so `JSON.stringify(tree)` is already an agent's tool manifest. A toolbar, a palette, a menu and a test read the same object and cannot disagree about what is available.
 
 A group with no visible member is dropped. Withheld verbs are dropped unless `includeUnavailable` asks for them with their reasons: a menu explains, a toolbar acts. `face: "icon"` is a strip's rule, no picture no control; `words` is the floor.
 

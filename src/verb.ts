@@ -62,6 +62,12 @@ export interface VerbArg {
 export const CAPABILITY_KEYS: ReadonlySet<string> = new Set(["id", "run", "enabled", "unavailable", "read", "appliesTo", "args"])
 
 /**
+ * The keys the projection writes on a `Control` from the host's context. Neither taste nor a
+ * declaration's extras may carry them: a `pressed` or a `reason` nobody read would be a lie on a surface.
+ */
+export const PROJECTED_KEYS: ReadonlySet<string> = new Set(["kind", "pressed", "value", "reason", "pending", "shortcut"])
+
+/**
  * What a verb **is**, deduced from its declaration and never written by a host: an `action` (a
  * doing), a `toggle` (a doing that is also a state — an action plus a readback), a `choice` (one
  * argument over a domain), a `value` (one argument to type in). Several arguments are an `action`

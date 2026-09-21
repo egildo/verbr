@@ -1,7 +1,7 @@
 // verbr — public surface. The register and its pure projections, nothing else. Nothing here
 // touches a DOM, holds state, or knows a host exists.
 
-export { kindOf, domainOf, CAPABILITY_KEYS } from "./verb.ts"
+export { kindOf, domainOf, CAPABILITY_KEYS, PROJECTED_KEYS } from "./verb.ts"
 export type { Verb, VerbArg, DomainMember, Kind } from "./verb.ts"
 
 export { compose } from "./register.ts"
