@@ -88,7 +88,7 @@ const tree = project(register, ctx, taste, { on: "item", face: "icon", platform:
 
 The register, seen from a surface, as plain JSON: sections with their members, each member a `Control` with `kind`, `as`, `label`, `icon`, the three-valued `enabled`, `reason`, `pending`, `pressed` or `value`, `appliesTo`, a formatted `shortcut`, `args`, and every other taste attribute carried through, `keys` included, so a surface can bind the chords it displays. No function anywhere, so `JSON.stringify(tree)` is already an agent's tool manifest. A toolbar, a palette, a menu and a test read the same object and cannot disagree about what is available.
 
-A group with no visible member is dropped. Withheld verbs are dropped unless `includeUnavailable` asks for them with their reasons: a menu explains, a toolbar acts. `face: "icon"` is a strip's rule, no picture no control; `words` is the floor.
+A verb that does not apply (`on`) is not there at all. A group with no visible member is dropped. Withheld verbs are dropped unless `includeUnavailable` asks for them with their reasons: a menu explains, a toolbar acts. `face: "icon"` is a strip's rule, no picture no control; `words` is the floor.
 
 ## The outlet
 
