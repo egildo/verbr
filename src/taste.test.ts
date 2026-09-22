@@ -88,3 +88,63 @@ describe("sight", () => {
     expect(t.sections).toEqual([{ id: "closing", label: "Closing", as: "menu" }])
   })
 })
+
+describe("refusals — a selection that could never match", () => {
+  it("refuses selecting on a capability or projected key, and an unknown kind", () => {
+    expect(() => applyTaste(reg, { layers: [{ name: "w", where: { on: "item" }, attrs: { x: 1 } }] })).toThrow(/selects on "on"/)
+    expect(() => applyTaste(reg, { layers: [{ name: "w", where: { enabled: null }, attrs: { x: 1 } }] })).toThrow(/selects on "enabled"/)
+    expect(() => applyTaste(reg, { layers: [{ name: "w", where: { pressed: true }, attrs: { x: 1 } }] })).toThrow(/selects on "pressed"/)
+    expect(() => applyTaste(reg, { layers: [{ name: "w", where: { kind: "button" as never }, attrs: { x: 1 } }] })).toThrow(/unknown kind "button"/)
+    expect(() => applyTaste(reg, { layers: [{ name: "w", where: { id: 3 as never }, attrs: { x: 1 } }] })).toThrow(/id that is not a string/)
+  })
+  it("refuses a taste key that misspells a capability", () => {
+    expect(() => applyTaste(reg, { verbs: { strong: { enable: false } } })).toThrow(/did you mean the capability key "enabled"/)
+  })
+  it("refuses a control-shaped key reserved for groups", () => {
+    expect(() => applyTaste(reg, { verbs: { strong: { items: [] } } })).toThrow(/projected key "items"/)
+    expect(() => applyTaste(compose({ id: "m", run: () => 0, items: ["x"] }), {})).toThrow(/declares projected key "items"/)
+  })
+})
+
+describe("derivations", () => {
+  it("refuses a name only the object prototype holds", () => {
+    for (const name of ["toString", "constructor", "hasOwnProperty", "__proto__"]) {
+      expect(() => applyTaste(reg, { layers: [{ name: "d", attrs: { title: { derive: name } } }] }), name).toThrow(/unknown derivation/)
+    }
+  })
+  it("resolves a derivation the declaration carries, and refuses an unknown one there too", () => {
+    const r = compose({ id: "doc:sign-it", run: () => 0, label: { derive: "humanize" } })
+    expect(applyTaste(r, {}).attrsOf("doc:sign-it")["label"]).toBe("Sign it")
+    expect(() => applyTaste(compose({ id: "x", run: () => 0, title: { derive: "shout" } }), {})).toThrow(/verb "x" names unknown derivation "shout"/)
+  })
+  it("a label stated as null is absent, so the naming default fills it", () => {
+    const r = compose({ id: "doc:sign-it", run: () => 0, label: null })
+    expect(applyTaste(r, {}).attrsOf("doc:sign-it")["label"]).toBe("Sign it")
+  })
+})
+
+describe("sections — a closed vocabulary", () => {
+  it("refuses a verb placed in an undeclared section", () => {
+    expect(() => applyTaste(reg, { verbs: { strong: { section: "typo" } } })).toThrow(/section "typo", which no taste document declares/)
+    expect(() => applyTaste(compose({ id: "x", run: () => 0, section: "nowhere" }), {})).toThrow(/section "nowhere"/)
+  })
+  it("refuses an undeclared parent and a loop of parents", () => {
+    expect(() => applyTaste(reg, { sections: [{ id: "s", parent: "nope" }] })).toThrow(/undeclared parent "nope"/)
+    expect(() => applyTaste(reg, { sections: [{ id: "a", parent: "b" }, { id: "b", parent: "a" }] })).toThrow(/loop of parents/)
+    expect(() => applyTaste(reg, { sections: [{ id: "a", parent: "a" }] })).toThrow(/loop of parents/)
+  })
+  it("a section declared in one document may be used from another", () => {
+    const t = applyTaste(reg, [{ sections: [{ id: "marks" }] }, { verbs: { strong: { section: "marks" } } }])
+    expect(t.attrsOf("strong")["section"]).toBe("marks")
+  })
+})
+
+describe("orphans — taste that reached nothing is seen, not refused", () => {
+  it("names a verbs entry for an id the register lacks and a layer that selected nothing", () => {
+    const t = applyTaste(reg, { name: "house", verbs: { sel: { label: "X" }, strong: { label: "Bold" } }, layers: [{ name: "gone", where: { id: "nope:*" }, attrs: { x: 1 } }, { name: "hit", where: { id: "table:*" }, attrs: { y: 1 } }] })
+    expect(t.orphans()).toEqual([{ layer: "house:verbs", id: "sel" }, { layer: "house:gone" }])
+  })
+  it("is empty when everything landed, the naming layer included", () => {
+    expect(applyTaste(reg, { verbs: { strong: { label: "Bold" } } }).orphans()).toEqual([])
+  })
+})

@@ -14,8 +14,12 @@
 export interface Verb<Ctx = unknown, Run = unknown, Args = Readonly<Record<string, unknown>>> {
   /** Unique across a composition — a collision is refused at build. `domain:local` by convention. */
   readonly id: string
-  /** What the host executes. Opaque here: a token, a function, a promise — the host's business. */
-  readonly run: (ctx: Ctx, args?: Args) => Run
+  /**
+   * What the host executes. Opaque here: a token, a function, a promise — the host's business.
+   * Declared as a method so a verb typed with its own `Args` still composes into a register, where
+   * args arrive from a surface as an untyped bag.
+   */
+  run(ctx: Ctx, args?: Args): Run
   /**
    * May it run, here, now? Three answers, not two: `true` (offered), `false` (withheld), and
    * `undefined` — **the authority has not spoken**, so the verb abstains rather than guesses. A
@@ -69,10 +73,42 @@ export interface VerbArg {
 export const CAPABILITY_KEYS: ReadonlySet<string> = new Set(["id", "run", "enabled", "unavailable", "read", "appliesTo", "args", "on"])
 
 /**
- * The keys the projection writes on a `Control` from the host's context. Neither taste nor a
- * declaration's extras may carry them: a `pressed` or a `reason` nobody read would be a lie on a surface.
+ * The keys the projection writes on a `Control` from the host's context, and `items`, which marks a
+ * `Group`. Neither taste nor a declaration's extras may carry them: a `pressed` or a `reason` nobody
+ * read would be a lie on a surface, and a control carrying `items` would be taken for a group.
  */
-export const PROJECTED_KEYS: ReadonlySet<string> = new Set(["kind", "pressed", "value", "reason", "pending", "shortcut"])
+export const PROJECTED_KEYS: ReadonlySet<string> = new Set(["kind", "pressed", "value", "reason", "pending", "shortcut", "items"])
+
+const KINDS: ReadonlySet<string> = new Set(["action", "toggle", "choice", "value"])
+
+/** `true` for one of the four {@link Kind}s. */
+export function isKind(v: unknown): v is Kind {
+  return typeof v === "string" && KINDS.has(v)
+}
+
+function distance(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j)
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i]
+    for (let j = 1; j <= b.length; j++) row[j] = Math.min(prev[j]! + 1, row[j - 1]! + 1, prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1))
+    prev = row
+  }
+  return prev[b.length]!
+}
+
+/**
+ * The capability key an extra key is probably a misspelling of — the same word in another case, or
+ * within two edits of a long one (`enable`, `unavailble`, `appliesto`). An open bag accepts any key,
+ * so a typo'd capability would otherwise pass as taste and reach a surface as an inert attribute.
+ */
+export function nearCapabilityKey(key: string): string | undefined {
+  if (CAPABILITY_KEYS.has(key)) return undefined
+  for (const cap of CAPABILITY_KEYS) {
+    if (key.toLowerCase() === cap.toLowerCase()) return cap
+    if (cap.length >= 7 && distance(key, cap) <= 2) return cap
+  }
+  return undefined
+}
 
 /**
  * What a verb **is**, deduced from its declaration and never written by a host: an `action` (a

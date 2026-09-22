@@ -1,4 +1,4 @@
-import type { Verb } from "./verb.ts"
+import { nearCapabilityKey, type Verb } from "./verb.ts"
 
 /**
  * The composed register: every verb a host knows, by id. Inert — no state, no subscription, no
@@ -16,14 +16,17 @@ export interface Register<Ctx = unknown, Run = unknown> {
  * Compose verb sets into one register. Entries are plain data — a plugin exports an array, the
  * host composes — so re-keying, stripping or overriding is a `map` before composing, not an API.
  * Throws on a duplicate id: a surface silently invoking the wrong capability is the failure this
- * exists to make impossible.
+ * exists to make impossible. Throws as well on an id that is not a non-empty string (no surface
+ * could summon it), an `on` that is not a list of tags, and an extra key that misspells a capability.
  */
 export function compose<Ctx = unknown, Run = unknown>(
-  ...sets: readonly (Verb<Ctx, Run> | readonly Verb<Ctx, Run>[])[]
+  // `never` admits a verb typed with any `Args`; in the register, args are what a surface sends.
+  ...sets: readonly (Verb<Ctx, Run, never> | readonly Verb<Ctx, Run, never>[])[]
 ): Register<Ctx, Run> {
   const byId = new Map<string, Verb<Ctx, Run>>()
   for (const set of sets) {
     for (const verb of Array.isArray(set) ? (set as readonly Verb<Ctx, Run>[]) : [set as Verb<Ctx, Run>]) {
+      check(verb as Verb<never, unknown, never>)
       if (byId.has(verb.id)) throw new Error(`verb id claimed twice: ${verb.id}`)
       byId.set(verb.id, verb)
     }
@@ -34,5 +37,15 @@ export function compose<Ctx = unknown, Run = unknown>(
     get: (id) => byId.get(id),
     has: (id) => byId.has(id),
     ids: () => verbs.map((v) => v.id),
+  }
+}
+
+function check(verb: Verb<never, unknown, never>): void {
+  if (typeof verb.id !== "string" || verb.id === "") throw new Error(`verb id must be a non-empty string, got ${JSON.stringify(verb.id)}`)
+  const on: unknown = verb.on
+  if (on !== undefined && !(Array.isArray(on) && on.every((t) => typeof t === "string"))) throw new Error(`verb "${verb.id}" declares \`on\` that is not a list of tags`)
+  for (const key of Object.keys(verb)) {
+    const near = nearCapabilityKey(key)
+    if (near) throw new Error(`verb "${verb.id}" carries "${key}" — did you mean the capability key "${near}"?`)
   }
 }

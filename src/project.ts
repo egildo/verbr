@@ -1,6 +1,6 @@
 import { formatChord, type Platform } from "./chord.ts"
 import type { Register } from "./register.ts"
-import type { Attributed, Section } from "./taste.ts"
+import { humanize, type Attributed, type Section } from "./taste.ts"
 import { kindOf, type Kind, type Verb } from "./verb.ts"
 
 /**
@@ -31,7 +31,7 @@ export interface Control {
   readonly pressed?: boolean
   /** A value's or a choice's current reading. */
   readonly value?: unknown
-  /** «3 of 7» — only when a selection is partial. */
+  /** «3 of 7» — only when a selection is partial. A verb that applies to none of it is withheld. */
   readonly appliesTo?: { readonly n: number; readonly of: number }
   /** The first chord, formatted for the platform asked. The chords themselves ride along as the `keys` attribute. */
   readonly shortcut?: string
@@ -87,7 +87,8 @@ export interface ProjectOptions {
 
 const DEFAULT_AS: Readonly<Record<Kind, string>> = { action: "button", toggle: "button", choice: "select", value: "field" }
 
-function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: ProjectOptions): Control | null {
+function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: ProjectOptions): Control | null {
+  if (!taste.has(verb.id)) throw new Error(`verb "${verb.id}" has no resolved taste — apply the taste to the register being projected`)
   if (verb.on && o.on !== undefined && !verb.on.includes(o.on)) return null
 
   const attrs = taste.attrsOf(verb.id)
@@ -95,11 +96,12 @@ function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: 
   const icon = typeof attrs["icon"] === "string" ? attrs["icon"] : undefined
   if ((o.face ?? "words") === "icon" && !icon) return null
 
-  const enabled = verb.enabled ? verb.enabled(ctx) : true
+  const n = verb.appliesTo?.(ctx)
+  // Applying to none of the targets is the verb speaking: it cannot run here, whatever else it says.
+  const enabled = n === 0 ? false : verb.enabled ? verb.enabled(ctx) : true
   if (enabled === false && !o.includeUnavailable) return null
   const reason = enabled === false ? verb.unavailable?.(ctx) : undefined
   const read = verb.read?.(ctx)
-  const n = verb.appliesTo?.(ctx)
   const keys = attrs["keys"]
   const first = Array.isArray(keys) ? keys[0] : typeof keys === "string" ? keys : undefined
 
@@ -109,14 +111,14 @@ function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: 
     id: verb.id,
     kind,
     as: typeof attrs["as"] === "string" ? attrs["as"] : DEFAULT_AS[kind],
-    label: String(attrs["label"] ?? verb.id),
+    label: attrs["label"] == null ? humanize(verb.id) : String(attrs["label"]),
     ...(icon ? { icon } : {}),
     ...(enabled !== undefined ? { enabled } : {}),
     ...(reason ? { reason } : {}),
     ...(o.pending?.has(verb.id) ? { pending: true } : {}),
     ...(kind === "toggle" && read !== undefined ? { pressed: Boolean(read) } : {}),
     ...(kind !== "toggle" && read !== undefined ? { value: read } : {}),
-    ...(n !== undefined && o.of !== undefined && o.of > 1 && n < o.of ? { appliesTo: { n, of: o.of } } : {}),
+    ...(n !== undefined && n > 0 && o.of !== undefined && o.of > 1 && n < o.of ? { appliesTo: { n, of: o.of } } : {}),
     ...(typeof first === "string" ? { shortcut: formatChord(first, o.platform) } : {}),
     ...(verb.args?.length ? { args: verb.args.map((a) => ({ ...a })) } : {}),
     ...(typeof attrs["section"] === "string" ? { section: attrs["section"] } : {}),
@@ -127,7 +129,8 @@ function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: 
  * The register, seen from a surface: every verb the context admits, as {@link Control}s, laid into
  * the taste's sections. A group with no visible member is dropped, not rendered empty — the
  * headings are part of the projection, not of the chrome. Verbs no section claims trail the sections at their level.
- * Pure: `(register, ctx, taste, options)` in, JSON out, nothing else touched.
+ * Pure: `(register, ctx, taste, options)` in, JSON out, nothing else touched. Throws when the taste
+ * was applied to a register that does not hold every verb projected.
  */
 export function project<Ctx, Run>(
   register: Register<Ctx, Run>,
@@ -137,7 +140,7 @@ export function project<Ctx, Run>(
 ): readonly TreeItem[] {
   const views: Control[] = []
   for (const verb of register.verbs) {
-    const v = toView(verb, ctx, taste, options)
+    const v = toControl(verb, ctx, taste, options)
     if (v) views.push(v)
   }
   const bySection = new Map<string | undefined, Control[]>()

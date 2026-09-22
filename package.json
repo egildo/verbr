@@ -10,19 +10,32 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
-  "files": ["dist", "*.md"],
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "*.md"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "prepare": "npm run build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.1",
     "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

@@ -1,4 +1,4 @@
-import { CAPABILITY_KEYS, PROJECTED_KEYS, kindOf, type Kind, type Verb } from "./verb.ts"
+import { CAPABILITY_KEYS, PROJECTED_KEYS, isKind, kindOf, nearCapabilityKey, type Kind, type Verb } from "./verb.ts"
 import type { Register } from "./register.ts"
 
 /**
@@ -40,8 +40,9 @@ export interface Layer {
  * The selection vocabulary — attribute equality, like a query's `where`. Three keys read the
  * declaration: `id` (exact, or a glob with one trailing `*`: `table:*`), `kind` (the deduced
  * {@link Kind}), `argType` (the first argument's `type`). Every other key reads an attribute an
- * earlier layer resolved. `null` matches an absent attribute. Deliberately not a selector
- * language: no specificity, order is the only precedence.
+ * earlier layer resolved. `null` matches an absent attribute (or one resolved to `null`). No other
+ * capability or projected key may be selected on — nothing would ever match it, so it is refused.
+ * Deliberately not a selector language: no specificity, order is the only precedence.
  */
 export interface Where {
   readonly id?: string
@@ -75,15 +76,29 @@ export interface Claim {
 
 /**
  * The register with its taste resolved, plus **sight**: `describe` answers, for any verb, which
- * layer claimed which attribute and who won; `audit` sweeps every contested pair. A cascade owes
- * sight, not refusal — the first time a control turns up somewhere you did not put it, this is the
- * instrument you want.
+ * layer claimed which attribute and who won; `audit` sweeps every contested pair; `orphans` lists
+ * the taste that reached no verb. A cascade owes sight, not refusal — the first time a control turns
+ * up somewhere you did not put it, or fails to turn up where you did, this is the instrument you want.
  */
 export interface Attributed {
+  /** Whether the register this taste was applied to holds the verb. */
+  has(id: string): boolean
   attrsOf(id: string): Attrs
   describe(id: string, key?: string): readonly Claim[]
   audit(): readonly { readonly id: string; readonly key: string; readonly claims: readonly Claim[] }[]
+  /**
+   * Taste that reached nothing: a `verbs` entry naming an id the register does not hold (`id` set),
+   * or a layer whose `where` selected no verb (`id` absent). Not refused — a house file may speak of
+   * verbs this host never composed — but seen.
+   */
+  orphans(): readonly Orphan[]
   readonly sections: readonly Section[]
+}
+
+/** Taste that reached no verb, as {@link Attributed.orphans} reports it. */
+export interface Orphan {
+  readonly layer: string
+  readonly id?: string
 }
 
 /** A label from an id, for a register nobody has named yet: `table:add-row-after` → `Add row after`. */
@@ -111,6 +126,25 @@ function matchesId(pattern: string, id: string): boolean {
   return pattern === id
 }
 
+function checkWhere(court: string, where: Where): void {
+  for (const [key, want] of Object.entries(where)) {
+    if (key === "id") {
+      if (typeof want !== "string") throw new Error(`taste layer "${court}" selects on an id that is not a string`)
+    } else if (key === "kind") {
+      if (!isKind(want)) throw new Error(`taste layer "${court}" selects on unknown kind ${JSON.stringify(want)} — a kind is action, toggle, choice or value`)
+    } else if (CAPABILITY_KEYS.has(key) || PROJECTED_KEYS.has(key)) {
+      throw new Error(`taste layer "${court}" selects on "${key}" — a layer sees taste and the declaration's shape, never the capability or the context`)
+    }
+  }
+}
+
+function checkKey(owner: string, key: string): void {
+  if (CAPABILITY_KEYS.has(key)) throw new Error(`${owner} reaches capability key "${key}" — taste may rename a verb, never redefine what it does`)
+  if (PROJECTED_KEYS.has(key)) throw new Error(`${owner} reaches projected key "${key}" — the projection reads it from the context, taste may not state it`)
+  const near = nearCapabilityKey(key)
+  if (near) throw new Error(`${owner} states "${key}" — did you mean the capability key "${near}"? Taste may not reach it either way`)
+}
+
 function matches(where: Where | undefined, verb: Verb<never, unknown, never>, resolved: Attrs): boolean {
   if (!where) return true
   for (const [key, want] of Object.entries(where)) {
@@ -122,7 +156,7 @@ function matches(where: Where | undefined, verb: Verb<never, unknown, never>, re
       if (verb.args?.[0]?.type !== want) return false
     } else {
       const have = resolved[key]
-      if (want === null ? have !== undefined : have !== want) return false
+      if (want === null ? have != null : have !== want) return false
     }
   }
   return true
@@ -131,8 +165,9 @@ function matches(where: Where | undefined, verb: Verb<never, unknown, never>, re
 /**
  * Apply taste to a register. The cascade is `NAMING`, then for each document its `verbs` section
  * (one layer of per-id claims) and then its `layers`, in order; later wins per key. Throws at build
- * for a layer that reaches a capability key or a projected key, or names a derivation the host does not hold — a
- * closed vocabulary with a loud diagnostic, never a silent guess.
+ * for a layer that reaches or selects on a capability key or a projected key, names a derivation the
+ * host does not hold, or places a verb in a section no document declared (and for a section whose
+ * `parent` is undeclared or loops) — a closed vocabulary with a loud diagnostic, never a silent guess.
  */
 export function applyTaste<Ctx, Run>(
   register: Register<Ctx, Run>,
@@ -149,36 +184,60 @@ export function applyTaste<Ctx, Run>(
     if (doc.verbs) courts.push({ name: `${docName}:verbs`, where: undefined, attrs: {}, perId: doc.verbs })
     for (const layer of doc.layers ?? []) courts.push({ name: `${docName}:${layer.name}`, where: layer.where, attrs: layer.attrs })
   })
+  const known = (value: unknown, owner: string): void => {
+    if (isDerivation(value) && !Object.hasOwn(derive, value.derive)) throw new Error(`${owner} names unknown derivation "${value.derive}"`)
+  }
   for (const court of courts) {
+    if (court.where) checkWhere(court.name, court.where)
     const bags = court.perId ? Object.values(court.perId) : [court.attrs]
     for (const bag of bags) {
       for (const [key, value] of Object.entries(bag)) {
-        if (CAPABILITY_KEYS.has(key)) throw new Error(`taste layer "${court.name}" reaches capability key "${key}" — taste may rename a verb, never redefine what it does`)
-        if (PROJECTED_KEYS.has(key)) throw new Error(`taste layer "${court.name}" reaches projected key "${key}" — the projection reads it from the context, taste may not state it`)
-        if (isDerivation(value) && !(value.derive in derive)) throw new Error(`taste layer "${court.name}" names unknown derivation "${value.derive}"`)
+        checkKey(`taste layer "${court.name}"`, key)
+        known(value, `taste layer "${court.name}"`)
       }
     }
   }
 
+  const sections = new Map<string, Section>()
+  for (const doc of docs) for (const s of doc.sections ?? []) sections.set(s.id, { ...sections.get(s.id), ...s })
+  for (const s of sections.values()) {
+    const seen = new Set<string>([s.id])
+    for (let p = s.parent; p !== undefined; p = sections.get(p)?.parent) {
+      if (!sections.has(p)) throw new Error(`section "${s.id}" names undeclared parent "${p}"`)
+      if (seen.has(p)) throw new Error(`section "${s.id}" sits in a loop of parents`)
+      seen.add(p)
+    }
+  }
+  const resolve = (raw: unknown, verb: Verb<never, unknown, never>, resolved: Attrs): unknown =>
+    isDerivation(raw) ? derive[raw.derive]!(verb, resolved) : raw
+
+  const reached = new Set<Court>()
   const claims = new Map<string, Claim[]>()
   const attrs = new Map<string, Attrs>()
   for (const verb of register.verbs as readonly Verb<never, unknown, never>[]) {
     const mine: Claim[] = []
     let resolved: Record<string, unknown> = {}
     // The declaration's own taste is the floor: whatever the declarer carried beyond the capability keys.
-    for (const [key, value] of Object.entries(verb)) {
+    for (const [key, raw] of Object.entries(verb)) {
       if (PROJECTED_KEYS.has(key)) throw new Error(`verb "${verb.id}" declares projected key "${key}" — the projection reads it from the context`)
-      if (!CAPABILITY_KEYS.has(key)) { resolved[key] = value; mine.push({ layer: "declared", key, value, wins: true }) }
+      if (CAPABILITY_KEYS.has(key)) continue
+      known(raw, `verb "${verb.id}"`)
+      const value = resolve(raw, verb, resolved)
+      resolved[key] = value
+      mine.push({ layer: "declared", key, value, wins: true })
     }
     for (const court of courts) {
-      const bag = court.perId ? court.perId[verb.id] : matches(court.where, verb, resolved) ? court.attrs : undefined
+      const bag = court.perId ? (Object.hasOwn(court.perId, verb.id) ? court.perId[verb.id] : undefined) : matches(court.where, verb, resolved) ? court.attrs : undefined
       if (!bag) continue
+      reached.add(court)
       for (const [key, raw] of Object.entries(bag)) {
-        const value = isDerivation(raw) ? derive[raw.derive]!(verb, resolved) : raw
+        const value = resolve(raw, verb, resolved)
         resolved = { ...resolved, [key]: value }
         mine.push({ layer: court.name, key, value, wins: true })
       }
     }
+    const section = resolved["section"]
+    if (typeof section === "string" && !sections.has(section)) throw new Error(`verb "${verb.id}" is placed in section "${section}", which no taste document declares`)
     // The last claim per key wins; mark the rest.
     const lastFor = new Map<string, number>()
     mine.forEach((c, i) => lastFor.set(c.key, i))
@@ -187,10 +246,14 @@ export function applyTaste<Ctx, Run>(
     attrs.set(verb.id, Object.freeze(resolved))
   }
 
-  const sections = new Map<string, Section>()
-  for (const doc of docs) for (const s of doc.sections ?? []) sections.set(s.id, { ...sections.get(s.id), ...s })
+  const orphans: Orphan[] = []
+  for (const court of courts) {
+    if (court.perId) for (const id of Object.keys(court.perId)) { if (!register.has(id)) orphans.push({ layer: court.name, id }) }
+    else if (court.name !== NAMING.name && !reached.has(court)) orphans.push({ layer: court.name })
+  }
 
   return {
+    has: (id) => attrs.has(id),
     attrsOf: (id) => attrs.get(id) ?? {},
     describe: (id, key) => (claims.get(id) ?? []).filter((c) => key === undefined || c.key === key),
     audit: () => {
@@ -202,6 +265,7 @@ export function applyTaste<Ctx, Run>(
       }
       return out
     },
+    orphans: () => orphans,
     sections: [...sections.values()],
   }
 }

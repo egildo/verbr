@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 import { flat, isGroup, project } from "./project.ts"
 import { compose } from "./register.ts"
 import { applyTaste } from "./taste.ts"
-import type { Verb } from "./verb.ts"
 
 /** A Nodemirror-shaped context: the node's spoken `actions` conclusion, or silence. */
 interface Ctx { readonly offered?: readonly string[]; readonly status: string }
@@ -75,7 +74,7 @@ describe("the tree", () => {
   })
 })
 
-describe("prediction nine — the projection is already a manifest", () => {
+describe("the projection is already a manifest", () => {
   it("round-trips through JSON with nothing lost", () => {
     const tree = project(reg, { offered: ["sell", "place"], status: "watched" }, taste, { includeUnavailable: true })
     expect(JSON.parse(JSON.stringify(tree))).toEqual(tree)
@@ -84,5 +83,53 @@ describe("prediction nine — the projection is already a manifest", () => {
       if (x && typeof x === "object") Object.values(x).forEach(walk)
     }
     walk(tree)
+  })
+})
+
+describe("sections, nested and faced", () => {
+  const r = compose<Ctx, unknown>([
+    { id: "bold", run: () => 0 },
+    { id: "italic", run: () => 0 },
+    { id: "h1", run: () => 0 },
+    { id: "loose", run: () => 0 },
+  ])
+  const t = applyTaste(r, {
+    verbs: { bold: { section: "marks", icon: "b" }, italic: { section: "marks" }, h1: { section: "blocks", icon: "h" }, loose: { icon: "l" } },
+    sections: [{ id: "format", label: "Format" }, { id: "marks", parent: "format" }, { id: "blocks", parent: "format" }],
+  })
+  it("nests groups under their parent, sections first, unplaced verbs trailing", () => {
+    const tree = project(r, { status: "open" }, t)
+    const shape = (items: readonly (typeof tree)[number][]): unknown => items.map((i) => (isGroup(i) ? { [i.id]: shape(i.items) } : i.id))
+    expect(shape(tree)).toEqual([{ format: [{ marks: ["bold", "italic"] }, { blocks: ["h1"] }] }, "loose"])
+  })
+  it("an icon face prunes the faceless and then the groups they emptied", () => {
+    const r2 = compose<Ctx, unknown>([{ id: "a", run: () => 0 }, { id: "b", run: () => 0 }])
+    const t2 = applyTaste(r2, { verbs: { a: { section: "x" }, b: { section: "y", icon: "b" } }, sections: [{ id: "x" }, { id: "y" }] })
+    const tree = project(r2, { status: "open" }, t2, { face: "icon" })
+    expect(tree.map((i) => i.id)).toEqual(["y"])
+  })
+})
+
+describe("appliesTo", () => {
+  const r = compose<Ctx, unknown>([{ id: "merge", run: () => 0, appliesTo: () => 0, unavailable: () => "nothing to merge" }, { id: "split", run: () => 0, appliesTo: () => 3 }])
+  const t = applyTaste(r, {})
+  it("a verb that applies to none of the targets is withheld, with its reason", () => {
+    expect(flat(project(r, { status: "open" }, t, { of: 5 })).map((v) => v.id)).toEqual(["split"])
+    const [merge] = flat(project(r, { status: "open" }, t, { of: 5, includeUnavailable: true }))
+    expect(merge).toMatchObject({ id: "merge", enabled: false, reason: "nothing to merge" })
+    expect(merge).not.toHaveProperty("appliesTo")
+  })
+})
+
+describe("a taste from another register", () => {
+  it("is refused rather than silently unlabelled", () => {
+    const other = compose<Ctx, unknown>({ id: "other", run: () => 0 })
+    expect(() => project(other, { status: "open" }, taste)).toThrow(/verb "other" has no resolved taste/)
+  })
+})
+
+describe("a control carrying items is not a group", () => {
+  it("is refused before it can reach flat()", () => {
+    expect(() => applyTaste(compose({ id: "m", run: () => 0, items: ["a"] }), {})).toThrow(/items/)
   })
 })

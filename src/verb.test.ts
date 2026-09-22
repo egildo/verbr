@@ -22,3 +22,10 @@ describe("domainOf", () => {
     expect(domainOf("sell")).toBe("")
   })
 })
+
+describe("domainOf, at the edges", () => {
+  it("a leading colon is the empty namespace; a trailing one keeps its name", () => {
+    expect(domainOf(":sign")).toBe("")
+    expect(domainOf("document:")).toBe("document")
+  })
+})

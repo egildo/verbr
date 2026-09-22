@@ -19,3 +19,27 @@ describe("compose — one act, one gate", () => {
     expect(r.get("t")?.["tableRole"]).toBe("cell")
   })
 })
+
+describe("compose — refusals for what no surface could use", () => {
+  it("refuses an empty or non-string id", () => {
+    expect(() => compose(verb(""))).toThrow(/non-empty string/)
+    expect(() => compose({ id: 1, run: () => 0 } as unknown as Verb)).toThrow(/non-empty string/)
+  })
+  it("refuses an `on` that is not a list of tags", () => {
+    expect(() => compose({ ...verb("a"), on: "item" } as unknown as Verb)).toThrow(/not a list of tags/)
+  })
+  it("refuses a key that misspells a capability, and keeps honest extras", () => {
+    expect(() => compose({ ...verb("a"), enable: () => true } as Verb)).toThrow(/did you mean the capability key "enabled"/)
+    expect(() => compose({ ...verb("a"), unavailble: () => "no" } as Verb)).toThrow(/"unavailable"/)
+    expect(() => compose({ ...verb("a"), Run: 1 } as Verb)).toThrow(/"run"/)
+    expect(compose({ ...verb("a"), danger: true, one: 1, ready: true } as Verb).has("a")).toBe(true)
+  })
+})
+
+describe("typed args", () => {
+  it("a verb typed with its own Args composes", () => {
+    interface Bid { readonly amount: number }
+    const place: Verb<unknown, string, Bid> = { id: "place", run: (_c, a) => String(a?.amount) }
+    expect(compose<unknown, string>(place).get("place")?.run(undefined, { amount: 3 })).toBe("3")
+  })
+})

@@ -56,7 +56,7 @@ describe("prediction one — the union needs no new word", () => {
       label: "Firma", icon: "approval", as: "button", keys: ["Mod-Shift-f"], keywords: ["firmare"], group: "approval", description: "Appone la firma.",
     }
     const [v] = flat(project(compose(everything), undefined, applyTaste(compose(everything), {}), { of: 7, platform: "mac" })) as [Control]
-    expect(v).toMatchObject({ id: "document:sign", kind: "value", label: "Firma", icon: "approval", enabled: true, appliesTo: { n: 3, of: 7 }, shortcut: "⌘⇧F", danger: true, placeholder: true, collector: "sign-deck", keywords: ["firmare"] })
+    expect(v).toMatchObject({ id: "document:sign", kind: "value", label: "Firma", icon: "approval", enabled: true, appliesTo: { n: 3, of: 7 }, shortcut: "⇧⌘F", danger: true, placeholder: true, collector: "sign-deck", keywords: ["firmare"] })
   })
 })
 
