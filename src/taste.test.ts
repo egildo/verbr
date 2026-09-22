@@ -64,6 +64,7 @@ describe("refusals — loud, at build", () => {
   it("a layer may not reach a capability key", () => {
     expect(() => applyTaste(reg, { layers: [{ name: "evil", attrs: { enabled: true } }] })).toThrow(/capability key "enabled"/)
     expect(() => applyTaste(reg, { verbs: { strong: { run: 1 } } })).toThrow(/capability key "run"/)
+    expect(() => applyTaste(reg, { layers: [{ name: "evil", attrs: { on: ["item"] } }] })).toThrow(/capability key "on"/)
   })
   it("neither a layer nor a declaration may state what the projection reads", () => {
     expect(() => applyTaste(reg, { verbs: { strong: { pressed: true } } })).toThrow(/projected key "pressed"/)

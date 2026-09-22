@@ -52,6 +52,20 @@ describe("what a view carries", () => {
   })
 })
 
+describe("applicability — `on` is where a verb lives, not whether it may run", () => {
+  it("a tagged verb appears only under its tags; an untagged one appears everywhere; no option projects all", () => {
+    const r = compose<Ctx, unknown>([
+      { id: "split", run: () => "split", on: ["item"] },
+      { id: "sell", run: () => "sell" },
+    ])
+    const t = applyTaste(r, {})
+    const ids = (on?: string) => flat(project(r, { status: "open" }, t, on ? { on } : {})).map((v) => v.id)
+    expect(ids("item")).toEqual(["split", "sell"])
+    expect(ids("bid")).toEqual(["sell"])
+    expect(ids()).toEqual(["split", "sell"])
+  })
+})
+
 describe("the tree", () => {
   it("lays views into sections, carries a section's taste, drops an empty group", () => {
     const tree = project(reg, { offered: ["sell"], status: "open" }, taste)

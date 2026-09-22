@@ -26,9 +26,11 @@ const place: Verb<ItemCtx, Request> = {
 
 **Availability has three values.** `true` is offered, `false` is withheld, and `undefined` means the authority has not spoken, so the verb abstains rather than guesses. The projection carries the third value as an absent key, the way a silent conclusion pours no attribute. A verb without `enabled` is always offered.
 
+**Applicability is not availability.** `on` names the tags of the contexts a verb belongs to — a node type for one host, `"table"` for another; the host says what a tag means. Absent means everywhere. Where `enabled` speaks of this moment and owes a reason, `on` speaks of where the verb lives at all: `project(..., { on: "item" })` skips a verb tagged elsewhere, so it is *absent* from the projection, never withheld and never dimmed. VS Code draws the same line between a command's `when` clause and its `enablement`.
+
 **Kind is deduced, never declared.** No arguments is an `action`, or a `toggle` if the verb reads back. One argument over a domain is a `choice`. One argument to type in is a `value`. Several arguments are an action that collects first. How a kind is *drawn* is the open `as` attribute, and that is taste.
 
-Every key not in the capability set (`id`, `run`, `enabled`, `unavailable`, `read`, `appliesTo`, `args`) is taste or a host extension and is preserved, never refused. A REST host's `affects`, a `danger` flag, a `collector` name all ride along and reach the surface untouched.
+Every key not in the capability set (`id`, `run`, `enabled`, `unavailable`, `read`, `appliesTo`, `args`, `on`) is taste or a host extension and is preserved, never refused. A REST host's `affects`, a `danger` flag, a `collector` name all ride along and reach the surface untouched.
 
 ## Composition
 
@@ -81,7 +83,7 @@ The naming default is itself a layer, seated first, matching only where no label
 
 ```ts
 import { project, flat } from "verbr"
-const tree = project(register, ctx, taste, { face: "icon", platform: "mac", includeUnavailable: false })
+const tree = project(register, ctx, taste, { on: "item", face: "icon", platform: "mac", includeUnavailable: false })
 ```
 
 The register, seen from a surface, as plain JSON: sections with their members, each member a `Control` with `kind`, `as`, `label`, `icon`, the three-valued `enabled`, `reason`, `pending`, `pressed` or `value`, `appliesTo`, a formatted `shortcut`, `args`, and every other taste attribute carried through, `keys` included, so a surface can bind the chords it displays. No function anywhere, so `JSON.stringify(tree)` is already an agent's tool manifest. A toolbar, a palette, a menu and a test read the same object and cannot disagree about what is available.

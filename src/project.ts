@@ -74,6 +74,8 @@ export type Face = "words" | "icon"
 
 export interface ProjectOptions {
   readonly face?: Face
+  /** The tag of the context being projected. A verb whose `on` is set and does not include it is skipped — it does not apply here, so it is absent, not withheld. */
+  readonly on?: string
   /** Show withheld verbs, disabled, instead of dropping them. A menu explains; a toolbar acts. */
   readonly includeUnavailable?: boolean
   /** Verb ids currently mid-flight. */
@@ -86,6 +88,8 @@ export interface ProjectOptions {
 const DEFAULT_AS: Readonly<Record<Kind, string>> = { action: "button", toggle: "button", choice: "select", value: "field" }
 
 function toView<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: ProjectOptions): Control | null {
+  if (verb.on && o.on !== undefined && !verb.on.includes(o.on)) return null
+
   const attrs = taste.attrsOf(verb.id)
   const kind = kindOf(verb as Verb<never, unknown, never>)
   const icon = typeof attrs["icon"] === "string" ? attrs["icon"] : undefined

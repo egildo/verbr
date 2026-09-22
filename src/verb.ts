@@ -31,6 +31,13 @@ export interface Verb<Ctx = unknown, Run = unknown, Args = Readonly<Record<strin
   readonly appliesTo?: (ctx: Ctx) => number
   /** What must be collected before `run` — present exactly when `run` needs `args`. */
   readonly args?: readonly VerbArg[]
+  /**
+   * The tags of the contexts this verb belongs to — a node type for one host, `"table"` for
+   * another; the host says what a tag means. Absent means everywhere. This is **applicability, not
+   * availability**: a verb that does not apply is absent from a projection, never «withheld». Where
+   * `enabled` speaks of this moment and may be explained, `on` speaks of where the verb lives at all.
+   */
+  readonly on?: readonly string[]
   /** Taste or a host extension. Preserved, never refused. */
   readonly [extra: string]: unknown
 }
@@ -59,7 +66,7 @@ export interface VerbArg {
  * The keys a capability owns. Everything else on a verb is taste, which is what lets a taste
  * layer be refused for reaching past its share: taste may rename a verb, never redefine what it does.
  */
-export const CAPABILITY_KEYS: ReadonlySet<string> = new Set(["id", "run", "enabled", "unavailable", "read", "appliesTo", "args"])
+export const CAPABILITY_KEYS: ReadonlySet<string> = new Set(["id", "run", "enabled", "unavailable", "read", "appliesTo", "args", "on"])
 
 /**
  * The keys the projection writes on a `Control` from the host's context. Neither taste nor a

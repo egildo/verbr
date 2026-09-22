@@ -1,6 +1,6 @@
 {
   "name": "verbr",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A verb register for Command API frontends: capabilities declared once, taste as a document, every surface a projection.",
   "license": "MIT",
   "type": "module",
@@ -16,6 +16,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
