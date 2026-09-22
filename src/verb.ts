@@ -4,8 +4,9 @@
  * A verb knows nothing about a surface, a store, a router or a DOM. It knows its host's `Ctx`
  * (an editor state, a node with its spoken answers, a selection) and answers four questions of it:
  * *may I run here* (`enabled`), *what do I read back* (`read`), *why not* (`unavailable`), and
- * *what do I need first* (`args`). `run` yields whatever the host executes — a ProseMirror command,
- * a Nodemirror request, a promise of an HTTP result — and this library never calls it.
+ * *what do I need first* (`args`). `run` yields whatever the host executes — a store action, an
+ * editor command, a promise of an HTTP result — and this library calls it only through `invoke`,
+ * after checking it may run, handing back what it returned untouched.
  *
  * Every key not named below is **taste or a host extension** and is preserved, never refused: a
  * `danger` flag, a `collector` name, an `affects` list a REST host invalidates by. The capability

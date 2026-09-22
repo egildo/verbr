@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { commandName, verbIdOf } from "./command.ts"
+import { commandName, verbIdOf } from "./outlet.ts"
 
 describe("the outlet — the platform's -- prefix", () => {
   it("spells a verb id as a custom command", () => expect(commandName("document:sign")).toBe("--document:sign"))

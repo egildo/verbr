@@ -1,4 +1,5 @@
-// The experiment's headless predictions, filed in the plan before this file existed.
+// The experiment's headless predictions, filed in the plan before this file existed. Where each
+// ancestor's field landed is tabled in DESIGN.md; this file keeps the claims that can be run.
 import { describe, expect, it } from "vitest"
 import { flat, project, type Control } from "./project.ts"
 import { compose } from "./register.ts"
@@ -6,48 +7,6 @@ import { applyTaste, type Taste } from "./taste.ts"
 import { kindOf, type Verb } from "./verb.ts"
 
 describe("prediction one — the union needs no new word", () => {
-  // Every field of the three registers, and where it lands here. A field with no home breaks the prediction.
-  const homes: Record<string, string> = {
-    // @sibar/verbs — Verb
-    "sibar.Verb.id": "Verb.id", "sibar.Verb.affects": "Verb[extra] (a REST host's extension)", "sibar.Verb.enabled": "Verb.enabled (now boolean | undefined)",
-    "sibar.Verb.unavailable": "Verb.unavailable", "sibar.Verb.read": "Verb.read", "sibar.Verb.appliesTo": "Verb.appliesTo", "sibar.Verb.args": "Verb.args",
-    "sibar.Verb.run": "Verb.run", "sibar.Verb.danger": "Verb[extra] → Control[attr]", "sibar.Verb.heavy": "Verb[extra] → Control[attr]",
-    "sibar.Verb.placeholder": "Verb[extra] → Control[attr]", "sibar.Verb.collector": "Verb[extra] → Control[attr]",
-    // @sibar/verbs — VerbArg
-    "sibar.VerbArg.id": "VerbArg.name (rename)", "sibar.VerbArg.label": "VerbArg[extra] (taste)", "sibar.VerbArg.domain": "VerbArg.domain as a name",
-    "sibar.VerbArg.required": "VerbArg.required", "sibar.VerbArg.input": "VerbArg.type (rename)",
-    // @sibar/model — Control
-    "sibar.Control.id": "Control.id", "sibar.Control.label": "Control.label", "sibar.Control.icon": "Control.icon", "sibar.Control.kind": "Control.kind",
-    "sibar.Control.enabled": "Control.enabled (absent when unspoken)", "sibar.Control.pending": "Control.pending", "sibar.Control.pressed": "Control.pressed",
-    "sibar.Control.reason": "Control.reason", "sibar.Control.description": "Control[attr] (taste)", "sibar.Control.appliesTo": "Control.appliesTo",
-    "sibar.Control.danger": "Control[attr]", "sibar.Control.heavy": "Control[attr]", "sibar.Control.shortcut": "Control.shortcut", "sibar.Control.placeholder": "Control[attr]",
-    "sibar.Control.args": "Control.args", "sibar.Control.collector": "Control[attr]", "sibar.VerbGroupView": "Group",
-    // @sibar/verbs — Effect: not a register concern; the host's `Run` type carries what `run` returns
-    "sibar.Effect": "Run (the host's own type parameter)",
-    // prosemirror-verbs — Capability / VerbEntry / Verb
-    "pm.Capability.id": "Verb.id", "pm.Capability.command": "Verb.run (normalized: args are run's second parameter)", "pm.Capability.read": "Verb.read",
-    "pm.Capability.enabled": "Verb.enabled", "pm.Capability.args": "Verb.args", "pm.Verb.run": "Verb.run",
-    "pm.VerbEntry.label": "Taste.verbs[id].label or declared floor", "pm.VerbEntry.icon": "Taste.verbs[id].icon", "pm.VerbEntry.as": "Taste.verbs[id].as",
-    "pm.VerbEntry.keys": "Taste.verbs[id].keys", "pm.VerbEntry.keywords": "Taste.verbs[id].keywords (open bag)", "pm.VerbEntry.group": "Taste.verbs[id].section (rename)",
-    "pm.VerbArg.name": "VerbArg.name", "pm.VerbArg.type": "VerbArg.type", "pm.VerbArg.domain": "VerbArg.domain as inline members", "pm.DomainMember.value": "DomainMember.value",
-    "pm.DomainMember.label/icon/keys": "DomainMember[extra] (taste)",
-    // prosemirror-verbs — AttrLayer / Attributed
-    "pm.AttrLayer.name": "Layer.name", "pm.AttrLayer.match": "Layer.where (data, not a predicate)", "pm.AttrLayer.attrs": "Layer.attrs (literal or named Derivation)",
-    "pm.Attributed.describe": "Attributed.describe", "pm.Attributed.audit": "Attributed.audit", "pm.namingLayer": "NAMING",
-    // prosemirror-verbs — ControlSpec / tree
-    "pm.ControlSpec.kind": "Control.kind", "pm.ControlSpec.as": "Control.as", "pm.ControlSpec.label": "Control.label", "pm.ControlSpec.title": "Control[attr] (taste)",
-    "pm.ControlSpec.icon": "Control.icon", "pm.ControlSpec.command": "not projected: a Control holds no function; the host runs by id", "pm.ControlSpec.active": "Control.pressed",
-    "pm.ControlSpec.value": "Control.value", "pm.ControlSpec.write": "not projected: the host runs by id with args", "pm.ControlSpec.options": "Control.args[0].domain",
-    "pm.ControlSpec.type": "Control.args[0].type", "pm.ControlSpec.keys": "Control.shortcut (formatted) + Control[attr] keys", "pm.ControlSpec.group": "Control.section",
-    "pm.GroupSpec": "Section", "pm.ControlGroup": "Group", "pm.FaceRule": "Face",
-    // Nodemirror — the action catalogue and the label map
-    "nm.ActionSchema.type": "Verb.id", "nm.ActionSchema.maxSelection": "Verb[extra] (the host's arity)", "nm.ActionSchema.payload": "Verb.args (one per payload field, type from the cell)",
-    "nm.actions conclusion": "Verb.enabled reading the spoken list; undefined when unspoken", "nm.defineActions.labels": "Taste.verbs[id].label",
-  }
-  it("every field of the three registers has a home", () => {
-    for (const [source, home] of Object.entries(homes)) expect(home, source).not.toMatch(/^\?/)
-    expect(Object.keys(homes).length).toBeGreaterThan(60)
-  })
   it("a verb carrying every sibardoc field and every prosemirror-verbs field composes and projects", () => {
     const everything: Verb = {
       id: "document:sign", run: () => "cmd", enabled: () => true, unavailable: () => undefined, read: () => false, appliesTo: () => 3,

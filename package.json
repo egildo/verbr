@@ -1,7 +1,8 @@
 {
   "name": "verbr",
-  "version": "0.2.0",
-  "description": "A verb register for Command API frontends: capabilities declared once, taste as a document, every surface a projection.",
+  "version": "0.3.0",
+  "description": "A command register for any UI over any state: capabilities declared once, taste as a document, every surface — toolbar, menu, palette, keyboard, agent — a projection, one checked door to run them.",
+  "keywords": ["commands", "command-palette", "keyboard-shortcuts", "toolbar", "menu", "state-management", "agent-tools", "mcp", "json-schema", "invoker-commands"],
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,17 +12,24 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./chord": {
+      "types": "./dist/chord.d.ts",
+      "default": "./dist/chord.js"
+    },
+    "./tools": {
+      "types": "./dist/tools.d.ts",
+      "default": "./dist/tools.js"
+    },
+    "./outlet": {
+      "types": "./dist/outlet.d.ts",
+      "default": "./dist/outlet.js"
+    },
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "src",
-    "!src/**/*.test.ts",
-    "*.md"
-  ],
+  "files": ["dist", "src", "!src/**/*.test.ts", "*.md"],
   "sideEffects": false,
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
     "prepare": "npm run build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",

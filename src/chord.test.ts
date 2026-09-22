@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { formatChord } from "./chord.ts"
+import { formatChord, keymap, matchChord } from "./chord.ts"
+import { compose } from "./register.ts"
+import { applyTaste } from "./taste.ts"
 
 describe("formatChord", () => {
   it("draws glyphs on a Mac and words elsewhere", () => {
@@ -28,5 +30,52 @@ describe("formatChord", () => {
     expect(formatChord("Mod-s", "mac")).toBe("⌘S")
     expect(formatChord("Shift")).toBe("Shift")
     expect(formatChord("Shift", "mac")).toBe("⇧")
+  })
+})
+
+const press = (key: string, mods: Partial<{ ctrl: boolean; alt: boolean; shift: boolean; meta: boolean }> = {}, code?: string) =>
+  ({ key, ...(code ? { code } : {}), ctrlKey: !!mods.ctrl, altKey: !!mods.alt, shiftKey: !!mods.shift, metaKey: !!mods.meta })
+
+describe("matchChord", () => {
+  it("resolves Mod per platform", () => {
+    expect(matchChord("Mod-k", press("k", { meta: true }), "mac")).toBe(true)
+    expect(matchChord("Mod-k", press("k", { ctrl: true }), "mac")).toBe(false)
+    expect(matchChord("Mod-k", press("k", { ctrl: true }))).toBe(true)
+  })
+  it("matches letters in either case, and demands exactly the modifiers named", () => {
+    expect(matchChord("Mod-Shift-z", press("Z", { ctrl: true, shift: true }))).toBe(true)
+    expect(matchChord("Mod-z", press("Z", { ctrl: true, shift: true }))).toBe(false)
+    expect(matchChord("Mod-z", press("z", { ctrl: true, alt: true }))).toBe(false)
+  })
+  it("lets Shift reach a symbol, and reads key aliases", () => {
+    expect(matchChord("Mod-?", press("?", { ctrl: true, shift: true }))).toBe(true)
+    expect(matchChord("Ctrl++", press("+", { ctrl: true, shift: true }))).toBe(true)
+    expect(matchChord("Space", press(" "))).toBe(true)
+    expect(matchChord("Esc", press("Escape"))).toBe(true)
+  })
+  it("falls back to the physical key when a modifier changed what key reports", () => {
+    expect(matchChord("Alt-k", press("˚", { alt: true }, "KeyK"), "mac")).toBe(true)
+    expect(matchChord("Alt-k", press("˚", { alt: true }), "mac")).toBe(false)
+  })
+})
+
+describe("keymap — the keyboard as a surface", () => {
+  const reg = compose([
+    { id: "todo:add", run: () => 0 },
+    { id: "todo:undo", run: () => 0 },
+    { id: "table:split", run: () => 0, on: ["table"] },
+    { id: "list:split", run: () => 0, on: ["list"] },
+  ])
+  const taste = applyTaste(reg, { verbs: { "todo:add": { keys: ["Mod-Enter", "Mod-n"] }, "todo:undo": { keys: "Mod-z" }, "table:split": { keys: ["Mod-s"] }, "list:split": { keys: ["Mod-s"] } } })
+  it("maps a key press to a verb id, for the context asked", () => {
+    const km = keymap(reg, taste, { platform: "mac", on: "table" })
+    expect(km.lookup(press("n", { meta: true }))).toBe("todo:add")
+    expect(km.lookup(press("z", { meta: true }))).toBe("todo:undo")
+    expect(km.lookup(press("s", { meta: true }))).toBe("table:split")
+    expect(km.lookup(press("q", { meta: true }))).toBeUndefined()
+    expect(km.bindings.map((b) => b.id)).toEqual(["todo:add", "todo:add", "todo:undo", "table:split"])
+  })
+  it("refuses two verbs claiming one chord where both apply", () => {
+    expect(() => keymap(reg, taste)).toThrow(/"Mod-s" is claimed by both "table:split" and "list:split"/)
   })
 })
