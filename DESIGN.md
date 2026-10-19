@@ -32,6 +32,7 @@ Recorded so they are not rediscovered.
 
 - The naming default needed `where: { label: null }` to be a floor rather than an override, and that is a rule with a selection, not an unconditional layer.
 - Hiding what is unavailable was never taste; it is the projection's option.
+- The icon face first dropped every verb without an icon, choices and values included. The ancestor applied it only to actions and toggles, and the venue had to restore that by hand: a choice wears the member it is on and a value is its field, so a picture was never their face.
 - Of the two rules for `value` in the ancestors, the one that does not require a readback was kept, so a payload field with nothing to read back is still a field.
 - A section, a derivation and a kind are closed vocabularies: a name nobody declared is refused at build rather than silently dropping a verb from a surface.
 - A verb that applies to none of a selection is withheld, not shown as «0 of N».

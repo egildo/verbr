@@ -81,7 +81,7 @@ describe("the README walkthrough", () => {
   it("a toolbar and a palette read one register and agree", () => {
     const state = store.getState()
     const toolbar = project(register, state, taste, { face: "icon" })
-    expect(toolbar.map((i) => (isGroup(i) ? i.items.map((c) => c.id) : i.id))).toEqual([["todo:add", "todo:complete"]])
+    expect(toolbar.map((i) => (isGroup(i) ? i.items.map((c) => c.id) : i.id))).toEqual([["todo:add", "todo:complete"], ["view:filter"]]) // the filter is a choice: it wears the member it is on
     const palette = flat(project(register, state, taste, { includeUnavailable: true, platform: "mac" }))
     expect(palette.map((c) => [c.label, c.shortcut ?? null])).toEqual([["Add", "⌘↵"], ["Complete", "⌘D"], ["Clear completed", null], ["Show", null]])
     expect(palette.find((c) => c.id === "view:filter")).toMatchObject({ kind: "choice", as: "select", value: "all" })

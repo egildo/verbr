@@ -77,8 +77,10 @@ export function isGroup(item: TreeItem): item is Group {
 
 /**
  * What counts as a face, and so what a verb needs to appear at all. `words`, the default and
- * every verb's floor, since every verb has a label. `icon` is a strip's rule: no picture, no
- * control — curation by omission, chosen by the surface.
+ * every verb's floor, since every verb has a label. `icon` is a strip's rule: a doing needs a
+ * picture, so an action or a toggle without one is not there — curation by omission, chosen by
+ * the surface. A `choice` and a `value` are exempt: they wear the member they are on and the
+ * field they are, as a font box or a zoom field does in any toolbar.
  */
 export type Face = "words" | "icon"
 
@@ -108,7 +110,7 @@ function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, register: Register<
   const attrs = taste.attrsOf(verb.id)
   const kind = kindOf(verb as Verb<never, unknown, never>)
   const icon = typeof attrs["icon"] === "string" ? attrs["icon"] : undefined
-  if ((o.face ?? "words") === "icon" && !icon) return null
+  if ((o.face ?? "words") === "icon" && !icon && (kind === "action" || kind === "toggle")) return null
 
   const verdict = verdictOf(verb as Verb<Ctx, unknown, never>, ctx, register.vocabulary, members)
   const { enabled, cause, appliesTo: applies } = verdict

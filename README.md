@@ -195,7 +195,7 @@ const tree = project(register, state, taste, { on: "row", face: "icon", platform
 
 The register, seen from a surface, as plain JSON: sections with their members, each member a `Control` with `kind`, `as`, `label`, `icon`, the three-valued `enabled`, `cause` and `reason`, `pending`, `pressed` or `value`, `appliesTo`, a formatted `shortcut`, `args`, and every other taste attribute carried through, `keys` included. No function anywhere. A toolbar, a palette, a menu, an agent and a test read the same object and cannot disagree about what is available.
 
-A verb that does not apply (`on`) is not there at all. A group with no visible member is dropped. Withheld verbs are dropped unless `includeUnavailable` asks for them with their causes and reasons: a menu explains, a toolbar acts. `face: "icon"` is a strip's rule, no picture no control; `words` is the floor. A taste applied to a different register is refused rather than projected unlabelled.
+A verb that does not apply (`on`) is not there at all. A group with no visible member is dropped. Withheld verbs are dropped unless `includeUnavailable` asks for them with their causes and reasons: a menu explains, a toolbar acts. `face: "icon"` is a strip's rule: an action or a toggle with no picture is not there, while a choice and a value show the member they are on and the field they are, and need none; `words` is the floor. A taste applied to a different register is refused rather than projected unlabelled.
 
 ## Invocation
 

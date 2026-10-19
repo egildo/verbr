@@ -108,6 +108,16 @@ describe("sections, nested and faced", () => {
     const tree = project(r2, { status: "open" }, t2, { face: "icon" })
     expect(tree.map((i) => i.id)).toEqual(["y"])
   })
+  it("an icon face asks a picture only of a doing: a choice and a value wear their own face", () => {
+    const r2 = compose<Ctx, unknown>([
+      { id: "act", run: () => 0 },
+      { id: "flip", run: () => 0, read: () => false },
+      { id: "pick", run: () => 0, args: [{ name: "font", domain: [{ value: "serif" }, { value: "sans" }] }] },
+      { id: "zoom", run: () => 0, args: [{ name: "percent", type: "number" }] },
+    ])
+    const tree = flat(project(r2, { status: "open" }, applyTaste(r2, {}), { face: "icon" }))
+    expect(tree.map((v) => [v.id, v.kind])).toEqual([["pick", "choice"], ["zoom", "value"]])
+  })
 })
 
 describe("appliesTo", () => {
