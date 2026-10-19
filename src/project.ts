@@ -1,4 +1,5 @@
 import { formatChord, type Platform } from "./chord.ts"
+import { verdictOf } from "./guard.ts"
 import type { Register } from "./register.ts"
 import { humanize, type Attributed, type Section } from "./taste.ts"
 import { kindOf, type Kind, type Verb } from "./verb.ts"
@@ -23,7 +24,9 @@ export interface Control {
   readonly label: string
   readonly icon?: string
   readonly enabled?: boolean
-  /** Why not — present only when `enabled` is `false` and the verb offered a reason. */
+  /** Why not, as a name: the rule a guard found false, or what `unavailable` named. Stable — what a test or an agent keys on. Present only when `enabled` is `false`. */
+  readonly cause?: string
+  /** Why not, in words: the {@link cause} as taste words it, humanized when nobody did. Present exactly when `cause` is. */
   readonly reason?: string
   /** A run of this verb is in flight. Owned by whoever runs it, never by the register. */
   readonly pending?: boolean
@@ -81,13 +84,11 @@ export interface ProjectOptions {
   /** Verb ids currently mid-flight. */
   readonly pending?: ReadonlySet<string>
   readonly platform?: Platform
-  /** How many targets the context holds, for «n of N». */
-  readonly of?: number
 }
 
 const DEFAULT_AS: Readonly<Record<Kind, string>> = { action: "button", toggle: "button", choice: "select", value: "field" }
 
-function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, o: ProjectOptions): Control | null {
+function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, register: Register<Ctx, Run>, taste: Attributed, o: ProjectOptions): Control | null {
   if (!taste.has(verb.id)) throw new Error(`verb "${verb.id}" has no resolved taste — apply the taste to the register being projected`)
   if (verb.on && o.on !== undefined && !verb.on.includes(o.on)) return null
 
@@ -96,11 +97,9 @@ function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, 
   const icon = typeof attrs["icon"] === "string" ? attrs["icon"] : undefined
   if ((o.face ?? "words") === "icon" && !icon) return null
 
-  const n = verb.appliesTo?.(ctx)
-  // Applying to none of the targets is the verb speaking: it cannot run here, whatever else it says.
-  const enabled = n === 0 ? false : verb.enabled ? verb.enabled(ctx) : true
+  const verdict = verdictOf(verb as Verb<Ctx, unknown, never>, ctx, register.vocabulary)
+  const { enabled, cause, appliesTo: applies } = verdict
   if (enabled === false && !o.includeUnavailable) return null
-  const reason = enabled === false ? verb.unavailable?.(ctx) : undefined
   const read = verb.read?.(ctx)
   const keys = attrs["keys"]
   const first = Array.isArray(keys) ? keys[0] : typeof keys === "string" ? keys : undefined
@@ -114,11 +113,11 @@ function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, taste: Attributed, 
     label: attrs["label"] == null ? humanize(verb.id) : String(attrs["label"]),
     ...(icon ? { icon } : {}),
     ...(enabled !== undefined ? { enabled } : {}),
-    ...(reason ? { reason } : {}),
+    ...(cause ? { cause, reason: taste.reasonOf(cause) } : {}),
     ...(o.pending?.has(verb.id) ? { pending: true } : {}),
     ...(kind === "toggle" && read !== undefined ? { pressed: Boolean(read) } : {}),
     ...(kind !== "toggle" && read !== undefined ? { value: read } : {}),
-    ...(n !== undefined && n > 0 && o.of !== undefined && o.of > 1 && n < o.of ? { appliesTo: { n, of: o.of } } : {}),
+    ...(applies && applies.of > 1 && applies.n < applies.of ? { appliesTo: { n: applies.n, of: applies.of } } : {}),
     ...(typeof first === "string" ? { shortcut: formatChord(first, o.platform) } : {}),
     ...(verb.args?.length ? { args: verb.args.map((a) => ({ ...a })) } : {}),
     ...(typeof attrs["section"] === "string" ? { section: attrs["section"] } : {}),
@@ -140,7 +139,7 @@ export function project<Ctx, Run>(
 ): readonly TreeItem[] {
   const views: Control[] = []
   for (const verb of register.verbs) {
-    const v = toControl(verb, ctx, taste, options)
+    const v = toControl(verb, ctx, register, taste, options)
     if (v) views.push(v)
   }
   const bySection = new Map<string | undefined, Control[]>()

@@ -53,7 +53,7 @@ describe("layers — order is the only precedence", () => {
     expect(t.describe("strong", "label").filter((c) => c.wins).map((c) => c.layer)).toEqual(["it:verbs"])
   })
   it("the declaration's own taste is the floor", () => {
-    const r = compose({ ...verb("x"), icon: "declared-icon" } as Verb)
+    const r = compose([{ ...verb("x"), icon: "declared-icon" } as Verb])
     const t = applyTaste(r, { verbs: { x: { icon: "host-icon" } } })
     expect(t.attrsOf("x")["icon"]).toBe("host-icon")
     expect(t.describe("x", "icon").map((c) => c.layer)).toEqual(["declared", "taste:verbs"])
@@ -69,7 +69,7 @@ describe("refusals — loud, at build", () => {
   it("neither a layer nor a declaration may state what the projection reads", () => {
     expect(() => applyTaste(reg, { verbs: { strong: { pressed: true } } })).toThrow(/projected key "pressed"/)
     expect(() => applyTaste(reg, { layers: [{ name: "evil", attrs: { reason: "lies" } }] })).toThrow(/projected key "reason"/)
-    expect(() => applyTaste(compose({ id: "x", run: () => 0, pending: true }), {})).toThrow(/declares projected key "pending"/)
+    expect(() => applyTaste(compose([{ id: "x", run: () => 0, pending: true }]), {})).toThrow(/declares projected key "pending"/)
   })
   it("an unknown derivation is refused, a known one resolves", () => {
     expect(() => applyTaste(reg, { layers: [{ name: "d", attrs: { label: { derive: "shout" } } }] })).toThrow(/unknown derivation "shout"/)
@@ -102,7 +102,7 @@ describe("refusals — a selection that could never match", () => {
   })
   it("refuses a control-shaped key reserved for groups", () => {
     expect(() => applyTaste(reg, { verbs: { strong: { items: [] } } })).toThrow(/projected key "items"/)
-    expect(() => applyTaste(compose({ id: "m", run: () => 0, items: ["x"] }), {})).toThrow(/declares projected key "items"/)
+    expect(() => applyTaste(compose([{ id: "m", run: () => 0, items: ["x"] }]), {})).toThrow(/declares projected key "items"/)
   })
 })
 
@@ -113,12 +113,12 @@ describe("derivations", () => {
     }
   })
   it("resolves a derivation the declaration carries, and refuses an unknown one there too", () => {
-    const r = compose({ id: "doc:sign-it", run: () => 0, label: { derive: "humanize" } })
+    const r = compose([{ id: "doc:sign-it", run: () => 0, label: { derive: "humanize" } }])
     expect(applyTaste(r, {}).attrsOf("doc:sign-it")["label"]).toBe("Sign it")
-    expect(() => applyTaste(compose({ id: "x", run: () => 0, title: { derive: "shout" } }), {})).toThrow(/verb "x" names unknown derivation "shout"/)
+    expect(() => applyTaste(compose([{ id: "x", run: () => 0, title: { derive: "shout" } }]), {})).toThrow(/verb "x" names unknown derivation "shout"/)
   })
   it("a label stated as null is absent, so the naming default fills it", () => {
-    const r = compose({ id: "doc:sign-it", run: () => 0, label: null })
+    const r = compose([{ id: "doc:sign-it", run: () => 0, label: null }])
     expect(applyTaste(r, {}).attrsOf("doc:sign-it")["label"]).toBe("Sign it")
   })
 })
@@ -126,7 +126,7 @@ describe("derivations", () => {
 describe("sections — a closed vocabulary", () => {
   it("refuses a verb placed in an undeclared section", () => {
     expect(() => applyTaste(reg, { verbs: { strong: { section: "typo" } } })).toThrow(/section "typo", which no taste document declares/)
-    expect(() => applyTaste(compose({ id: "x", run: () => 0, section: "nowhere" }), {})).toThrow(/section "nowhere"/)
+    expect(() => applyTaste(compose([{ id: "x", run: () => 0, section: "nowhere" }]), {})).toThrow(/section "nowhere"/)
   })
   it("refuses an undeclared parent and a loop of parents", () => {
     expect(() => applyTaste(reg, { sections: [{ id: "s", parent: "nope" }] })).toThrow(/undeclared parent "nope"/)

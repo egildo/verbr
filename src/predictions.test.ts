@@ -9,12 +9,12 @@ import { kindOf, type Verb } from "./verb.ts"
 describe("prediction one — the union needs no new word", () => {
   it("a verb carrying every sibardoc field and every prosemirror-verbs field composes and projects", () => {
     const everything: Verb = {
-      id: "document:sign", run: () => "cmd", enabled: () => true, unavailable: () => undefined, read: () => false, appliesTo: () => 3,
+      id: "document:sign", run: () => "cmd", enabled: () => true, unavailable: () => undefined, read: () => false, appliesTo: () => ({ n: 3, of: 7 }),
       args: [{ name: "reason", type: "text", required: true, label: "Motivazione" }],
       affects: [{ type: "documents" }], danger: true, heavy: false, placeholder: true, collector: "sign-deck",
       label: "Firma", icon: "approval", as: "button", keys: ["Mod-Shift-f"], keywords: ["firmare"], group: "approval", description: "Appone la firma.",
     }
-    const [v] = flat(project(compose(everything), undefined, applyTaste(compose(everything), {}), { of: 7, platform: "mac" })) as [Control]
+    const [v] = flat(project(compose([everything]), undefined, applyTaste(compose([everything]), {}), { platform: "mac" })) as [Control]
     expect(v).toMatchObject({ id: "document:sign", kind: "value", label: "Firma", icon: "approval", enabled: true, appliesTo: { n: 3, of: 7 }, shortcut: "⇧⌘F", danger: true, placeholder: true, collector: "sign-deck", keywords: ["firmare"] })
   })
 })

@@ -12,11 +12,13 @@ What verbr's shape follows, where it came from, and what the first build settled
 
 **Applicability is not availability.** Where a verb lives at all (`on`) is a different question from whether it may run this moment (`enabled`). A verb that does not apply is absent, not dimmed, and owes no reason.
 
-**Data as far as the vocabulary reaches, code by name beyond it.** A taste document holds no function. Where a value must be computed, the document names a function the host holds (`{ derive: "humanize" }`), and the host must hold it or the document is refused. Arg types follow the same rule (`types`). That is what lets a design tool, a test or an agent read a host's taste without running the host.
+**Data as far as the vocabulary reaches, code by name beyond it.** A taste document holds no function. Where a value must be computed, the document names a function the host holds (`{ derive: "humanize" }`), and the host must hold it or the document is refused. Guards apply the same rule to availability (`{ rule: "locked" }`, resolved by the vocabulary handed to `compose`), and arg types follow it too (`types`). That is what lets a design tool, a test or an agent read a host's taste without running the host.
 
 **A cascade owes sight, not refusal — except where the taste could only mislead.** Order is the only precedence; `describe`, `audit` and `orphans` show who claimed what. Refusal is kept for taste that could never be right: reaching a capability, stating what the projection reads from the context, selecting on something that can never match, naming a derivation or section that does not exist.
 
 **No state, no DOM, no adapters.** The context is a type parameter and the projection is a pure function. An adapter for a state library would wrap one function call; the README shows the call instead.
+
+**A cause is a name; a reason is words.** Which leaf withheld a verb is capability; the sentence a person reads is taste, and a language file must be able to change it. So every withheld answer carries both, under `cause` and `reason`. Google's error model spells the stable name `reason` and the words `message`; verbr keeps `reason` for the words because a `Control` already meant that, and that is deliberate, not an oversight to correct.
 
 ## Provenance
 
@@ -33,6 +35,10 @@ Recorded so they are not rediscovered.
 - Of the two rules for `value` in the ancestors, the one that does not require a readback was kept, so a payload field with nothing to read back is still a field.
 - A section, a derivation and a kind are closed vocabularies: a name nobody declared is refused at build rather than silently dropping a verb from a surface.
 - A verb that applies to none of a selection is withheld, not shown as «0 of N».
+- The «n of N» belongs to `some`, not to `every`. The ancestor read it off `every` plus a flag, but "every" means every, and 3 of 7 is a withheld verb.
+- The count's total was once a projection option while its `n` came from the verb, two sources free to disagree. Both now come from one place: the guard's list, or `appliesTo` returning `{ n, of }`.
+- `every` over an empty list is false, not vacuously true, because a bulk verb with nothing selected has nothing to do.
+- Availability was computed twice, once by the projection and once by `invoke`, in copies of the same line. Guards made the copies diverge on day one, so there is one verdict both call.
 - Running a verb belongs in the library after all, as one checked door (`invoke`), because every host was writing the same lookup, availability check and args check, and every surface — keyboard, palette, agent — needed the same answer.
 
 ## Where each ancestor's field landed

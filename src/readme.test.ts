@@ -18,14 +18,14 @@ const todoVerbs: Verb<State, Action>[] = [
   {
     id: "todo:complete",
     run: (s) => ({ type: "complete", ids: s.selected }),
-    appliesTo: (s) => s.todos.filter((t) => s.selected.includes(t.id) && !t.done).length,
-    unavailable: () => "select an open to-do",
+    enabled: { some: "selected", where: { not: { rule: "done" } } },
+    unavailable: () => "nothingSelected",
   },
   {
     id: "todo:clear-done",
     run: () => ({ type: "clearDone" }),
     enabled: (s) => s.todos.some((t) => t.done),
-    unavailable: () => "nothing is done yet",
+    unavailable: () => "nothingDone",
   },
   {
     id: "view:filter",
@@ -35,7 +35,10 @@ const todoVerbs: Verb<State, Action>[] = [
   },
 ]
 
-const register = compose(todoVerbs)
+const register = compose([todoVerbs], {
+  rules: { done: (t: Todo) => t.done },
+  lists: { selected: (s) => s.todos.filter((t) => s.selected.includes(t.id)) },
+})
 const taste = applyTaste(register, {
   verbs: {
     "todo:add": { icon: "plus", keys: "Mod-Enter", section: "edit" },
@@ -44,6 +47,7 @@ const taste = applyTaste(register, {
     "view:filter": { label: "Show", section: "view" },
   },
   sections: [{ id: "edit", label: "Edit" }, { id: "view", label: "View" }],
+  reasons: { nothingSelected: "Select an open to-do", nothingDone: "Nothing is done yet" },
 })
 
 function reducer(s: State, a: Action): State {
@@ -69,14 +73,14 @@ function makeStore(initial: State) {
 describe("the README walkthrough", () => {
   const store = makeStore({ todos: [{ id: "1", title: "Milk", done: false }, { id: "2", title: "Eggs", done: true }], filter: "all", selected: ["1"] })
   function run(id: string, args?: Readonly<Record<string, unknown>>) {
-    const result = invoke(register, id, store.getState(), args)
+    const result = invoke(register, id, store.getState(), args, { taste })
     if (result.ok) store.dispatch(result.value)
     return result
   }
 
   it("a toolbar and a palette read one register and agree", () => {
     const state = store.getState()
-    const toolbar = project(register, state, taste, { face: "icon", of: state.selected.length })
+    const toolbar = project(register, state, taste, { face: "icon" })
     expect(toolbar.map((i) => (isGroup(i) ? i.items.map((c) => c.id) : i.id))).toEqual([["todo:add", "todo:complete"]])
     const palette = flat(project(register, state, taste, { includeUnavailable: true, platform: "mac" }))
     expect(palette.map((c) => [c.label, c.shortcut ?? null])).toEqual([["Add", "⌘↵"], ["Complete", "⌘D"], ["Clear completed", null], ["Show", null]])
@@ -93,7 +97,7 @@ describe("the README walkthrough", () => {
     expect(id).toBe("todo:complete")
     run(id!)
     expect(store.getState().todos.filter((t) => t.done).map((t) => t.title)).toEqual(["Milk", "Eggs"])
-    expect(run("todo:complete")).toEqual({ ok: false, id: "todo:complete", code: "withheld", reason: "select an open to-do" })
+    expect(run("todo:complete")).toEqual({ ok: false, id: "todo:complete", code: "withheld", cause: "nothingSelected", reason: "Select an open to-do" })
 
     expect(verbIdOf({ command: commandName("todo:clear-done") })).toBe("todo:clear-done")
     run("todo:clear-done")

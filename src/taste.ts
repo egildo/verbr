@@ -4,9 +4,10 @@ import type { Register } from "./register.ts"
 /**
  * **Taste is a document.** Everything a host decides about a verb that is not what it does: what
  * to call it, which picture it wears, which chord answers to it, which section it sits in, how it
- * is drawn. A document has two sections and a section list. `verbs` holds per-verb opinions keyed
- * by id. `layers` holds rules that apply to many verbs at once, in order, later winning per key.
- * `sections` names the groups a surface may lay verbs out in. Several documents stack root-first:
+ * is drawn, what to say when it cannot run. `verbs` holds per-verb opinions keyed by id. `layers`
+ * holds rules that apply to many verbs at once, in order, later winning per key. `sections` names
+ * the groups a surface may lay verbs out in. `reasons` words the reasons a verb is withheld, keyed
+ * by the name a guard or `unavailable` yields. Several documents stack root-first:
  * a house file, a product file, a language file — the same shape at every depth.
  *
  * The document is **readable data**: no function anywhere in it. A rule selects verbs with a
@@ -19,6 +20,8 @@ export interface Taste {
   readonly verbs?: Readonly<Record<string, Attrs>>
   readonly layers?: readonly Layer[]
   readonly sections?: readonly Section[]
+  /** Reason name → the words a surface shows. Later documents win per name, so a language file words what a product file named. */
+  readonly reasons?: Readonly<Record<string, string>>
 }
 
 /** A bag of taste. Open by construction; the capability keys are refused at build. */
@@ -93,6 +96,8 @@ export interface Attributed {
    */
   orphans(): readonly Orphan[]
   readonly sections: readonly Section[]
+  /** The words for a reason's name: the last document that worded it, else the name humanized. */
+  reasonOf(name: string): string
 }
 
 /** Taste that reached no verb, as {@link Attributed.orphans} reports it. */
@@ -103,9 +108,13 @@ export interface Orphan {
 
 /** A label from an id, for a register nobody has named yet: `table:add-row-after` → `Add row after`. */
 export function humanize(id: string): string {
-  const local = id.slice(id.lastIndexOf(":") + 1)
-  const words = local.split(/[-_]/).filter(Boolean).join(" ")
-  return words ? words[0]!.toUpperCase() + words.slice(1) : id
+  return sentence(id.slice(id.lastIndexOf(":") + 1)) || id
+}
+
+/** Words from a name: `add-row-after`, `add_row_after`, `addRowAfter` → `Add row after`. A sentence passes through as itself. */
+export function sentence(name: string): string {
+  const words = name.replace(/([a-z])([A-Z])/g, (_, a: string, b: string) => `${a} ${b.toLowerCase()}`).split(/[-_]/).filter(Boolean).join(" ")
+  return words ? words[0]!.toUpperCase() + words.slice(1) : ""
 }
 
 const BUILT_IN: Derivations = { humanize: (verb) => humanize(verb.id) }
@@ -251,6 +260,7 @@ export function applyTaste<Ctx, Run>(
     if (court.perId) for (const id of Object.keys(court.perId)) { if (!register.has(id)) orphans.push({ layer: court.name, id }) }
     else if (court.name !== NAMING.name && !reached.has(court)) orphans.push({ layer: court.name })
   }
+  const reasons: Record<string, string> = Object.assign({}, ...docs.map((d) => d.reasons ?? {}))
 
   return {
     has: (id) => attrs.has(id),
@@ -267,5 +277,6 @@ export function applyTaste<Ctx, Run>(
     },
     orphans: () => orphans,
     sections: [...sections.values()],
+    reasonOf: (name) => reasons[name] ?? (sentence(name) || name),
   }
 }

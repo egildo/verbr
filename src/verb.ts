@@ -1,3 +1,5 @@
+import type { Guard } from "./guard.ts"
+
 /**
  * The verb — a **declared capability**: what a host can do, said once as data, addressable by id.
  *
@@ -26,14 +28,27 @@ export interface Verb<Ctx = unknown, Run = unknown, Args = Readonly<Record<strin
    * `undefined` — **the authority has not spoken**, so the verb abstains rather than guesses. A
    * verb without `enabled` is always offered. The projection carries all three: an unspoken verb
    * reaches a surface with its `enabled` key absent, the way a silent conclusion pours no attribute.
+   *
+   * Two forms. A {@link Guard} — a tree of names the host's vocabulary resolves — is data, readable
+   * without running the host, and deduces the reason and the «n of N» on its own. A function is for
+   * a host whose answer is *run it and see*, like a ProseMirror command's dry run. Prefer the tree
+   * wherever it can say the thing.
    */
-  readonly enabled?: (ctx: Ctx) => boolean | undefined
-  /** Why not — consulted only when `enabled` said `false`. A reason for something you *can* do is a lie waiting to be read. */
+  readonly enabled?: ((ctx: Ctx) => boolean | undefined) | Guard
+  /**
+   * Why not — consulted only when `enabled` said `false`, and preferred over the reason a guard
+   * deduces. It returns a reason's **name**, which taste words (`reasons:`); an unworded name is
+   * humanized, so a finished sentence passes through as itself. A reason for something you *can*
+   * do is a lie waiting to be read.
+   */
   readonly unavailable?: (ctx: Ctx) => string | undefined
   /** The readback, if the verb addresses state: a boolean for a toggle, a member for a choice, a value for a field. */
   readonly read?: (ctx: Ctx) => unknown
-  /** Over a multiple selection, how many targets this verb can touch — the «3 of 7». */
-  readonly appliesTo?: (ctx: Ctx) => number
+  /**
+   * Over a multiple selection, how many targets this verb can touch, and of how many — the «3 of
+   * 7», both numbers from one place. Preferred over the count a guard deduces from its `some`.
+   */
+  readonly appliesTo?: (ctx: Ctx) => { readonly n: number; readonly of: number } | undefined
   /** What must be collected before `run` — present exactly when `run` needs `args`. */
   readonly args?: readonly VerbArg[]
   /**
@@ -78,7 +93,7 @@ export const CAPABILITY_KEYS: ReadonlySet<string> = new Set(["id", "run", "enabl
  * `Group`. Neither taste nor a declaration's extras may carry them: a `pressed` or a `reason` nobody
  * read would be a lie on a surface, and a control carrying `items` would be taken for a group.
  */
-export const PROJECTED_KEYS: ReadonlySet<string> = new Set(["kind", "pressed", "value", "reason", "pending", "shortcut", "items"])
+export const PROJECTED_KEYS: ReadonlySet<string> = new Set(["kind", "pressed", "value", "cause", "reason", "pending", "shortcut", "items"])
 
 const KINDS: ReadonlySet<string> = new Set(["action", "toggle", "choice", "value"])
 

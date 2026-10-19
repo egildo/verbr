@@ -1,5 +1,7 @@
 import { checkArgs, type ArgIssue, type ArgOptions } from "./args.ts"
+import { verdictOf } from "./guard.ts"
 import type { Register } from "./register.ts"
+import { sentence, type Attributed } from "./taste.ts"
 import type { Verb } from "./verb.ts"
 
 /**
@@ -8,13 +10,15 @@ import type { Verb } from "./verb.ts"
  *
  * - `unknown`: no verb has this id.
  * - `inapplicable`: the verb does not live in this context (`on`).
- * - `withheld`: `enabled` said `false`, or `appliesTo` said none; `reason` is the verb's own word, if it has one.
+ * - `withheld`: `enabled` said `false`, or `appliesTo` said none. `cause` names why, when a guard
+ *   found a rule false or `unavailable` named it; `reason` is that cause in words — taste's, when
+ *   the caller passed it, else humanized — the same pair a {@link Control} carries.
  * - `unspoken`: `enabled` has not spoken and the caller asked for that to count as no.
  * - `args`: the args do not fit the declaration; `issues` says how.
  */
 export type Refusal =
   | { readonly ok: false; readonly id: string; readonly code: "unknown" | "inapplicable" | "unspoken" }
-  | { readonly ok: false; readonly id: string; readonly code: "withheld"; readonly reason?: string }
+  | { readonly ok: false; readonly id: string; readonly code: "withheld"; readonly cause?: string; readonly reason?: string }
   | { readonly ok: false; readonly id: string; readonly code: "args"; readonly issues: readonly ArgIssue[] }
 
 /** A verb cleared to run, with the args it will run with. */
@@ -36,6 +40,12 @@ export interface InvokeOptions extends ArgOptions {
    * wait for the authority to speak.
    */
   readonly refuseUnspoken?: boolean
+  /**
+   * The taste a refusal's `reason` is worded by, so a refusal reads as the surface did. It words,
+   * and never decides: whether a verb runs is the same with or without it. Must have been applied
+   * to this register.
+   */
+  readonly taste?: Attributed
 }
 
 /**
@@ -52,11 +62,13 @@ export function prepare<Ctx, Run>(
 ): Prepared<Ctx, Run> | Refusal {
   const verb = register.get(id)
   if (!verb) return { ok: false, id, code: "unknown" }
+  const taste = options.taste
+  if (taste && !taste.has(id)) throw new Error(`verb "${id}" has no resolved taste — apply the taste to the register being invoked`)
   if (verb.on && options.on !== undefined && !verb.on.includes(options.on)) return { ok: false, id, code: "inapplicable" }
-  const enabled = verb.appliesTo?.(ctx) === 0 ? false : verb.enabled ? verb.enabled(ctx) : true
+  const { enabled, cause } = verdictOf(verb as Verb<Ctx, unknown, never>, ctx, register.vocabulary)
   if (enabled === false) {
-    const reason = verb.unavailable?.(ctx)
-    return reason ? { ok: false, id, code: "withheld", reason } : { ok: false, id, code: "withheld" }
+    if (!cause) return { ok: false, id, code: "withheld" }
+    return { ok: false, id, code: "withheld", cause, reason: taste ? taste.reasonOf(cause) : sentence(cause) || cause }
   }
   if (enabled === undefined && options.refuseUnspoken) return { ok: false, id, code: "unspoken" }
   const issues = checkArgs(verb.args, args, options)

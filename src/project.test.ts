@@ -29,7 +29,7 @@ describe("the three states of enabled", () => {
   it("includeUnavailable keeps a withheld verb with its reason; a reason never rides an offered one", () => {
     const views = flat(project(reg, { offered: ["place"], status: "open" }, taste, { includeUnavailable: true }))
     const sell = views.find((v) => v.id === "sell")
-    expect(sell).toMatchObject({ enabled: false, reason: "not the seller" })
+    expect(sell).toMatchObject({ enabled: false, reason: "Not the seller" }) // an unworded name is humanized: a sentence passes through, capitalized
     expect(views.find((v) => v.id === "place")).not.toHaveProperty("reason")
   })
 })
@@ -111,25 +111,25 @@ describe("sections, nested and faced", () => {
 })
 
 describe("appliesTo", () => {
-  const r = compose<Ctx, unknown>([{ id: "merge", run: () => 0, appliesTo: () => 0, unavailable: () => "nothing to merge" }, { id: "split", run: () => 0, appliesTo: () => 3 }])
+  const r = compose<Ctx, unknown>([{ id: "merge", run: () => 0, appliesTo: () => ({ n: 0, of: 5 }), unavailable: () => "nothing to merge" }, { id: "split", run: () => 0, appliesTo: () => ({ n: 3, of: 5 }) }])
   const t = applyTaste(r, {})
   it("a verb that applies to none of the targets is withheld, with its reason", () => {
-    expect(flat(project(r, { status: "open" }, t, { of: 5 })).map((v) => v.id)).toEqual(["split"])
-    const [merge] = flat(project(r, { status: "open" }, t, { of: 5, includeUnavailable: true }))
-    expect(merge).toMatchObject({ id: "merge", enabled: false, reason: "nothing to merge" })
+    expect(flat(project(r, { status: "open" }, t)).map((v) => v.id)).toEqual(["split"])
+    const [merge] = flat(project(r, { status: "open" }, t, { includeUnavailable: true }))
+    expect(merge).toMatchObject({ id: "merge", enabled: false, cause: "nothing to merge", reason: "Nothing to merge" })
     expect(merge).not.toHaveProperty("appliesTo")
   })
 })
 
 describe("a taste from another register", () => {
   it("is refused rather than silently unlabelled", () => {
-    const other = compose<Ctx, unknown>({ id: "other", run: () => 0 })
+    const other = compose<Ctx, unknown>([{ id: "other", run: () => 0 }])
     expect(() => project(other, { status: "open" }, taste)).toThrow(/verb "other" has no resolved taste/)
   })
 })
 
 describe("a control carrying items is not a group", () => {
   it("is refused before it can reach flat()", () => {
-    expect(() => applyTaste(compose({ id: "m", run: () => 0, items: ["a"] }), {})).toThrow(/items/)
+    expect(() => applyTaste(compose([{ id: "m", run: () => 0, items: ["a"] }]), {})).toThrow(/items/)
   })
 })
