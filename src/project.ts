@@ -1,8 +1,8 @@
 import { formatChord, type Platform } from "./chord.ts"
-import { verdictOf } from "./guard.ts"
-import type { Register } from "./register.ts"
+import { argSchema, type JsonSchema } from "./args.ts"
+import { membersFor, verdictOf, type Members, type Register, type Vocabulary } from "./register.ts"
 import { humanize, type Attributed, type Section } from "./taste.ts"
-import { kindOf, type Kind, type Verb } from "./verb.ts"
+import { kindOf, type Kind, type Verb, type VerbArg } from "./verb.ts"
 
 /**
  * What a surface eats: one verb, seen from the outside, as **plain JSON**. No function, no DOM
@@ -45,12 +45,19 @@ export interface Control {
   readonly [attr: string]: unknown
 }
 
-/** An argument, projected: a `domain` given inline keeps its members; a named one keeps its name — the host resolves it. */
+/**
+ * An argument, projected. `domain` is as declared: inline members, or a name. A named domain's
+ * `members` are read from the context, absent when the host cannot say yet. `schema` is the
+ * argument as JSON Schema — its type's, or an `enum` of its members — the same the args are
+ * checked against at `invoke`, so a form or an agent is never promised what the door refuses.
+ */
 export interface ArgView {
   readonly name: string
   readonly type?: string
   readonly domain?: string | readonly { readonly value: string; readonly [extra: string]: unknown }[]
+  readonly members?: readonly { readonly value: string; readonly [extra: string]: unknown }[]
   readonly required?: boolean
+  readonly schema: JsonSchema
   readonly [extra: string]: unknown
 }
 
@@ -88,7 +95,13 @@ export interface ProjectOptions {
 
 const DEFAULT_AS: Readonly<Record<Kind, string>> = { action: "button", toggle: "button", choice: "select", value: "field" }
 
-function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, register: Register<Ctx, Run>, taste: Attributed, o: ProjectOptions): Control | null {
+function argView(arg: VerbArg, vocabulary: Vocabulary<never>, members: Members): ArgView {
+  const resolved = typeof arg.domain === "string" ? members(arg.domain) : undefined
+  const domains = resolved && typeof arg.domain === "string" ? { domains: { [arg.domain]: resolved } } : {}
+  return { ...arg, ...(resolved ? { members: resolved } : {}), schema: argSchema(arg, { ...(vocabulary.types ? { types: vocabulary.types } : {}), ...domains }) }
+}
+
+function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, register: Register<Ctx, Run>, members: Members, taste: Attributed, o: ProjectOptions): Control | null {
   if (!taste.has(verb.id)) throw new Error(`verb "${verb.id}" has no resolved taste — apply the taste to the register being projected`)
   if (verb.on && o.on !== undefined && !verb.on.includes(o.on)) return null
 
@@ -97,7 +110,7 @@ function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, register: Register<
   const icon = typeof attrs["icon"] === "string" ? attrs["icon"] : undefined
   if ((o.face ?? "words") === "icon" && !icon) return null
 
-  const verdict = verdictOf(verb as Verb<Ctx, unknown, never>, ctx, register.vocabulary)
+  const verdict = verdictOf(verb as Verb<Ctx, unknown, never>, ctx, register.vocabulary, members)
   const { enabled, cause, appliesTo: applies } = verdict
   if (enabled === false && !o.includeUnavailable) return null
   const read = verb.read?.(ctx)
@@ -119,7 +132,7 @@ function toControl<Ctx, Run>(verb: Verb<Ctx, Run>, ctx: Ctx, register: Register<
     ...(kind !== "toggle" && read !== undefined ? { value: read } : {}),
     ...(applies && applies.of > 1 && applies.n < applies.of ? { appliesTo: { n: applies.n, of: applies.of } } : {}),
     ...(typeof first === "string" ? { shortcut: formatChord(first, o.platform) } : {}),
-    ...(verb.args?.length ? { args: verb.args.map((a) => ({ ...a })) } : {}),
+    ...(verb.args?.length ? { args: verb.args.map((a) => argView(a, register.vocabulary as Vocabulary<never>, members)) } : {}),
     ...(typeof attrs["section"] === "string" ? { section: attrs["section"] } : {}),
   }
 }
@@ -138,8 +151,9 @@ export function project<Ctx, Run>(
   options: ProjectOptions = {},
 ): readonly TreeItem[] {
   const views: Control[] = []
+  const members = membersFor(register.vocabulary, ctx)
   for (const verb of register.verbs) {
-    const v = toControl(verb, ctx, register, taste, options)
+    const v = toControl(verb, ctx, register, members, taste, options)
     if (v) views.push(v)
   }
   const bySection = new Map<string | undefined, Control[]>()

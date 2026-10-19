@@ -1,6 +1,5 @@
-import { checkArgs, type ArgIssue, type ArgOptions } from "./args.ts"
-import { verdictOf } from "./guard.ts"
-import type { Register } from "./register.ts"
+import { checkArgs, type ArgIssue, type Domains } from "./args.ts"
+import { membersFor, verdictOf, type Register } from "./register.ts"
 import { sentence, type Attributed } from "./taste.ts"
 import type { Verb } from "./verb.ts"
 
@@ -31,7 +30,7 @@ export interface Prepared<Ctx, Run> {
 
 export type Invoked<Run> = { readonly ok: true; readonly id: string; readonly value: Run } | Refusal
 
-export interface InvokeOptions extends ArgOptions {
+export interface InvokeOptions {
   /** The tag of the context, as `project` takes it: a verb whose `on` excludes it is refused as `inapplicable`. */
   readonly on?: string
   /**
@@ -65,13 +64,21 @@ export function prepare<Ctx, Run>(
   const taste = options.taste
   if (taste && !taste.has(id)) throw new Error(`verb "${id}" has no resolved taste — apply the taste to the register being invoked`)
   if (verb.on && options.on !== undefined && !verb.on.includes(options.on)) return { ok: false, id, code: "inapplicable" }
-  const { enabled, cause } = verdictOf(verb as Verb<Ctx, unknown, never>, ctx, register.vocabulary)
+  const members = membersFor(register.vocabulary, ctx)
+  const { enabled, cause } = verdictOf(verb as Verb<Ctx, unknown, never>, ctx, register.vocabulary, members)
   if (enabled === false) {
     if (!cause) return { ok: false, id, code: "withheld" }
     return { ok: false, id, code: "withheld", cause, reason: taste ? taste.reasonOf(cause) : sentence(cause) || cause }
   }
   if (enabled === undefined && options.refuseUnspoken) return { ok: false, id, code: "unspoken" }
-  const issues = checkArgs(verb.args, args, options)
+  // The same types and members the projection stated, read with the same context.
+  const domains: Record<string, Domains[string]> = {}
+  for (const a of verb.args ?? []) {
+    const m = typeof a.domain === "string" ? members(a.domain) : undefined
+    if (m && typeof a.domain === "string") domains[a.domain] = m
+  }
+  const types = register.vocabulary.types
+  const issues = checkArgs(verb.args, args, { ...(types ? { types } : {}), domains })
   if (issues.length) return { ok: false, id, code: "args", issues }
   return { ok: true, id, verb, args: args ?? {} }
 }

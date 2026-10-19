@@ -100,11 +100,15 @@ export function argSchema(arg: VerbArg, o: ArgOptions = {}): JsonSchema {
 
 /** A verb's args as one JSON Schema object — what a tool manifest or a form generator reads. */
 export function argsSchema(args: readonly VerbArg[] | undefined, o: ArgOptions = {}): JsonSchema {
-  const list = args ?? []
+  return objectSchema(args ?? [], (a) => argSchema(a, o))
+}
+
+/** The object schema around args whose own schemas are already known — a projection's, say. */
+export function objectSchema<A extends { readonly name: string; readonly required?: boolean }>(list: readonly A[], schemaOf: (arg: A) => JsonSchema): JsonSchema {
   const required = list.filter((a) => a.required).map((a) => a.name)
   return {
     type: "object",
-    properties: Object.fromEntries(list.map((a) => [a.name, argSchema(a, o)])),
+    properties: Object.fromEntries(list.map((a) => [a.name, schemaOf(a)])),
     ...(required.length ? { required } : {}),
     additionalProperties: false,
   }

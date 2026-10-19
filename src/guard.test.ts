@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { evaluate, type Guard, type Vocabulary } from "./guard.ts"
+import { evaluate, type Guard } from "./guard.ts"
 import { flat, project } from "./project.ts"
-import { compose } from "./register.ts"
+import { compose, type Vocabulary } from "./register.ts"
 import { applyTaste } from "./taste.ts"
 
 /** A context whose rules answer whatever the test says, including silence. */

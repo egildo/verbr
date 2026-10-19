@@ -12,7 +12,7 @@ What verbr's shape follows, where it came from, and what the first build settled
 
 **Applicability is not availability.** Where a verb lives at all (`on`) is a different question from whether it may run this moment (`enabled`). A verb that does not apply is absent, not dimmed, and owes no reason.
 
-**Data as far as the vocabulary reaches, code by name beyond it.** A taste document holds no function. Where a value must be computed, the document names a function the host holds (`{ derive: "humanize" }`), and the host must hold it or the document is refused. Guards apply the same rule to availability (`{ rule: "locked" }`, resolved by the vocabulary handed to `compose`), and arg types follow it too (`types`). That is what lets a design tool, a test or an agent read a host's taste without running the host.
+**Data as far as the vocabulary reaches, code by name beyond it.** A taste document holds no function. Where a value must be computed, the document names a function the host holds (`{ derive: "humanize" }`), and the host must hold it or the document is refused. Guards apply the same rule to availability (`{ rule: "locked" }`), and arguments to their types and domains; all of them are names resolved by the one vocabulary handed to `compose`, refused there when the host does not hold them. A type is fixed and a domain's members are read from the context, because one is a shape and the other is state. That is what lets a design tool, a test or an agent read a host's taste without running the host.
 
 **A cascade owes sight, not refusal — except where the taste could only mislead.** Order is the only precedence; `describe`, `audit` and `orphans` show who claimed what. Refusal is kept for taste that could never be right: reaching a capability, stating what the projection reads from the context, selecting on something that can never match, naming a derivation or section that does not exist.
 
@@ -39,6 +39,8 @@ Recorded so they are not rediscovered.
 - The count's total was once a projection option while its `n` came from the verb, two sources free to disagree. Both now come from one place: the guard's list, or `appliesTo` returning `{ n, of }`.
 - `every` over an empty list is false, not vacuously true, because a bulk verb with nothing selected has nothing to do.
 - Availability was computed twice, once by the projection and once by `invoke`, in copies of the same line. Guards made the copies diverge on day one, so there is one verdict both call.
+- Arg types and domains first arrived at each `invoke` and each `manifest` call, so the schema an agent was shown and the check it met could come from different options, and an unknown name passed silently. They moved to the vocabulary at `compose`, the projection states members and schemas, and the door reads the same.
+- A required choice over an empty domain is withheld, the domain its cause. The ancestor's «Nuovo documento» stayed enabled with no folder to pick; that is the bug this settles.
 - Running a verb belongs in the library after all, as one checked door (`invoke`), because every host was writing the same lookup, availability check and args check, and every surface — keyboard, palette, agent — needed the same answer.
 
 ## Where each ancestor's field landed

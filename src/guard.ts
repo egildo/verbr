@@ -1,10 +1,10 @@
-import type { Verb } from "./verb.ts"
+import type { Vocabulary } from "./register.ts"
 
 /**
  * **Availability as data.** A guard is a tree any reader can walk without running the host: a
  * bench, a test, an agent. verbr owns the grammar — `all`, `any`, `not`, and four quantifiers over
  * a list — and the host owns the words: every `rule` and every list is a **name** the host resolves
- * in its {@link Vocabulary}, refused at build when the host does not hold it. The same split as
+ * in the register's vocabulary, refused at build when the host does not hold it. The same split as
  * taste's derivations: data as far as the vocabulary reaches, code by name beyond it.
  *
  * The logic is **Kleene's strong three-valued logic**, the one SQL uses for NULL, because a verb's
@@ -31,17 +31,7 @@ export type Quantified =
   | { readonly one: string; readonly where?: Guard }
   | { readonly many: string; readonly where?: Guard }
 
-/**
- * The words a host's guards may use. A `rule` reads its subject — the context at the top of a
- * tree, an item inside a quantifier's `where` — and answers in three values. A list yields the
- * items a quantifier counts over, or `undefined` when the host cannot say yet.
- */
-export interface Vocabulary<Ctx = unknown> {
-  readonly rules?: Readonly<Record<string, (subject: never, ctx: Ctx) => boolean | undefined>>
-  readonly lists?: Readonly<Record<string, (ctx: Ctx) => readonly unknown[] | undefined>>
-}
-
-/** What a guard — or a whole verb, through {@link verdictOf} — says of one context. */
+/** What a guard — or a whole verb, through the register's `verdictOf` — says of one context. */
 export interface Verdict {
   readonly enabled: boolean | undefined
   /** Why not, as a name for taste to word: the rule that made the guard false, or what `unavailable` named. Absent when no single leaf is to blame. */
@@ -149,19 +139,3 @@ export function evaluate<Ctx>(g: Guard, ctx: Ctx, vocabulary: Vocabulary<Ctx>): 
   }
 }
 
-/**
- * A verb's whole answer about one context — the one place availability is computed, so the
- * projection and `invoke` cannot disagree. The guard (or function) speaks first; a declared
- * `appliesTo` of none withholds whatever else was said; what the declarer named (`unavailable`,
- * `appliesTo`) beats what the guard deduced.
- */
-export function verdictOf<Ctx>(verb: Verb<Ctx, unknown, never>, ctx: Ctx, vocabulary: Vocabulary<Ctx>): Verdict {
-  const declared = verb.appliesTo?.(ctx)
-  const spoken: Verdict =
-    verb.enabled === undefined ? { enabled: true } : typeof verb.enabled === "function" ? { enabled: verb.enabled(ctx) } : evaluate(verb.enabled, ctx, vocabulary)
-  // Applying to none of the targets is the verb speaking: it cannot run here, whatever else it says.
-  const enabled = declared?.n === 0 ? false : spoken.enabled
-  const cause = enabled === false ? (verb.unavailable?.(ctx) ?? spoken.cause) : undefined
-  const appliesTo = enabled === false ? undefined : (declared ?? spoken.appliesTo)
-  return { enabled, ...(cause ? { cause } : {}), ...(appliesTo ? { appliesTo } : {}) }
-}

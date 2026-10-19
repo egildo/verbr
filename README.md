@@ -137,7 +137,7 @@ Every key not in the capability set (`id`, `run`, `enabled`, `unavailable`, `rea
 const register = compose([documentVerbs, folderVerbs, [share, archive]], { rules, lists })
 ```
 
-One act: the sets in a list, then the host's vocabulary for guards — the same shape as `applyTaste(register, documents, derivations)`. A duplicate id throws at build, never at a click, and so do an empty id (no surface could summon it), an `on` that is not a list of tags, and a guard that is malformed or names a rule or list the vocabulary does not hold. Entries are plain data, so re-keying or stripping is a `map` before composing, not an API. A verb typed with its own `Args` composes like any other; in the register, args are what a surface sends, and `invoke` checks them.
+One act: the sets in a list, then the host's vocabulary for guards — the same shape as `applyTaste(register, documents, derivations)`. A duplicate id throws at build, never at a click, and so do an empty id (no surface could summon it), an `on` that is not a list of tags, a guard that is malformed or names a rule or list the vocabulary does not hold, and an argument whose type or domain the vocabulary does not hold. Entries are plain data, so re-keying or stripping is a `map` before composing, not an API. A verb typed with its own `Args` composes like any other; in the register, args are what a surface sends, and `invoke` checks them.
 
 ## Taste is a document
 
@@ -208,7 +208,12 @@ A surface names a verb by id and sends a bag of args; `invoke` is the one place 
 
 Pass `taste` in the options and a refusal's `reason` is worded as the surface words it; without it the cause is humanized. Taste words a refusal and never decides one: whether a verb runs is the same with or without it. The availability check is the projection's own, so a button and its shortcut cannot disagree.
 
-Arg types are an open vocabulary like derivations. The built-ins are `text`, `string`, `number`, `integer`, `boolean`, `date`, `datetime`, `url` and `email`; a host adds or replaces types with `types: { "story-points": { check, schema } }`, and lists the members of a named domain with `domains: { people: [...] }`. A type nobody defined accepts any value. `checkArgs` and `argsSchema` are exported for forms that want to validate or describe args themselves.
+Arg types and named domains are words in the vocabulary handed to `compose`, beside a guard's rules and lists, and a name the host does not hold is refused there. Each is held in its own nature:
+
+- **A type is fixed**, since what an email looks like does not change between clicks. The built-ins are `text`, `string`, `number`, `integer`, `boolean`, `date`, `datetime`, `url` and `email`; a host adds or replaces them with `types: { points: { check, schema } }`.
+- **A domain's members are read from the context**, since the people in this workspace or the folders this user may file into are state: `domains: { folders: (state) => state.folders.map((f) => ({ value: f.id, label: f.name })) }`. A domain returning `undefined` has not spoken, and its argument goes unchecked.
+
+The projection reads each named domain once and writes its `members` onto the argument, with the argument's JSON Schema beside them; `invoke` checks against the same members and types, read with the same context. So a picker, an agent and the door cannot disagree. A required argument whose domain is empty right now has nothing to choose from, so its verb is withheld with the domain's name as its cause. `checkArgs` and `argsSchema` are exported for forms that want to validate or describe args themselves, over members they already hold.
 
 ## The keyboard — `verbr/chord`
 
@@ -228,7 +233,7 @@ import { manifest } from "verbr/tools"
 const { tools, idOf } = manifest(project(register, state, taste))
 ```
 
-The projection as a tool manifest, in the Model Context Protocol's shape (`name`, `title`, `description`, `inputSchema`). An agent is offered exactly what a user could press, in the same words, with args as JSON Schema; withheld verbs are left out unless `includeUnavailable` asks. Verb ids become valid tool names (`todo:add` → `todo_add`), and `idOf` maps a tool call back to the verb for `invoke`. Other providers differ only in spelling — `input_schema`, `parameters` — which is a `map` at the host.
+The projection as a tool manifest, in the Model Context Protocol's shape (`name`, `title`, `description`, `inputSchema`). An agent is offered exactly what a user could press, in the same words, with args as the JSON Schema the projection stated, so it needs no options of its own; withheld verbs are left out unless `includeUnavailable` asks. Verb ids become valid tool names (`todo:add` → `todo_add`), and `idOf` maps a tool call back to the verb for `invoke`. Other providers differ only in spelling — `input_schema`, `parameters` — which is a `map` at the host.
 
 ## The Invoker Commands outlet — `verbr/outlet`
 

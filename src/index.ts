@@ -7,10 +7,10 @@ export { kindOf, isKind, domainOf, CAPABILITY_KEYS, PROJECTED_KEYS } from "./ver
 export type { Verb, VerbArg, DomainMember, Kind } from "./verb.ts"
 
 export { evaluate, checkGuard } from "./guard.ts"
-export type { Guard, Quantifier, Quantified, Vocabulary, Verdict } from "./guard.ts"
+export type { Guard, Quantifier, Quantified, Verdict } from "./guard.ts"
 
 export { compose } from "./register.ts"
-export type { Register } from "./register.ts"
+export type { Register, Vocabulary } from "./register.ts"
 
 export { applyTaste, humanize, NAMING } from "./taste.ts"
 export type { Taste, Attrs, Layer, Where, Derivation, Derivations, Section, Claim, Attributed, Orphan } from "./taste.ts"

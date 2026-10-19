@@ -1,4 +1,4 @@
-import { argsSchema, type ArgOptions, type JsonSchema } from "./args.ts"
+import { objectSchema, type JsonSchema } from "./args.ts"
 import { flat, type Control, type TreeItem } from "./project.ts"
 
 /**
@@ -19,7 +19,7 @@ export interface Manifest {
   idOf(name: string): string | undefined
 }
 
-export interface ManifestOptions extends ArgOptions {
+export interface ManifestOptions {
   /** Offer withheld verbs as tools too. By default an agent is offered what a user could press. */
   readonly includeUnavailable?: boolean
 }
@@ -51,7 +51,7 @@ export function manifest(tree: readonly TreeItem[] | readonly Control[], options
     const name = toolName(control.id, ids)
     ids.set(name, control.id)
     const description = typeof control["description"] === "string" ? control["description"] : control.label
-    tools.push({ name, title: control.label, description, inputSchema: argsSchema(control.args, options) })
+    tools.push({ name, title: control.label, description, inputSchema: objectSchema(control.args ?? [], (a) => a.schema) })
   }
   return { tools, idOf: (name) => ids.get(name) }
 }
