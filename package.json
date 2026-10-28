@@ -1,9 +1,15 @@
 {
   "name": "verbr",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A command register for any UI over any state: capabilities declared once, taste as a document, every surface — toolbar, menu, palette, keyboard, agent — a projection, one checked door to run them.",
   "keywords": ["commands", "command-palette", "keyboard-shortcuts", "toolbar", "menu", "state-management", "agent-tools", "mcp", "json-schema", "invoker-commands"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://codeberg.org/egildo/verbr.git"
+  },
+  "homepage": "https://codeberg.org/egildo/verbr",
+  "bugs": "https://codeberg.org/egildo/verbr/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
