@@ -1,7 +1,7 @@
 // verbr — the core. The register, its taste, its projection and its invocation: pure functions
 // over data, nothing else. Nothing here touches a DOM, holds state, or knows a host exists.
-// Surfaces beyond the projection live at subpaths: `verbr/chord` (the keyboard), `verbr/tools`
-// (an agent's tool manifest), `verbr/outlet` (the Invoker Commands API's `--` spelling).
+// Surfaces beyond the projection live at subpaths: `@egildo/verbr/chord` (the keyboard), `@egildo/verbr/tools`
+// (an agent's tool manifest), `@egildo/verbr/outlet` (the Invoker Commands API's `--` spelling).
 
 export { kindOf, isKind, domainOf, CAPABILITY_KEYS, PROJECTED_KEYS } from "./verb.ts"
 export type { Verb, VerbArg, DomainMember, Kind } from "./verb.ts"

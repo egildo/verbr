@@ -15,7 +15,7 @@ verbr answers it once. A **verb** declares a capability and the questions it ans
 A to-do list, with a store that dispatches actions. The store could be anything; verbr only ever sees the state you pass in and hands back what `run` returns.
 
 ```ts
-import { compose, applyTaste, project, flat, invoke, type Verb } from "verbr"
+import { compose, applyTaste, project, flat, invoke, type Verb } from "@egildo/verbr"
 
 const todoVerbs: Verb<State, Action>[] = [
   {
@@ -81,9 +81,9 @@ function run(id: string, args?: Record<string, unknown>) {
 The keyboard, the platform's `<button command>`, and an agent all end in `run`:
 
 ```ts
-import { keymap } from "verbr/chord"
-import { verbIdOf } from "verbr/outlet"
-import { manifest } from "verbr/tools"
+import { keymap } from "@egildo/verbr/chord"
+import { verbIdOf } from "@egildo/verbr/outlet"
+import { manifest } from "@egildo/verbr/tools"
 
 const keys = keymap(register, taste, { platform: "mac" })
 addEventListener("keydown", (e) => { const id = keys.lookup(e); if (id) { e.preventDefault(); run(id) } })
@@ -215,10 +215,10 @@ Arg types and named domains are words in the vocabulary handed to `compose`, bes
 
 The projection reads each named domain once and writes its `members` onto the argument, with the argument's JSON Schema beside them; `invoke` checks against the same members and types, read with the same context. So a picker, an agent and the door cannot disagree. A required argument whose domain is empty right now has nothing to choose from, so its verb is withheld with the domain's name as its cause. `checkArgs` and `argsSchema` are exported for forms that want to validate or describe args themselves, over members they already hold.
 
-## The keyboard — `verbr/chord`
+## The keyboard — `@egildo/verbr/chord`
 
 ```ts
-import { keymap, formatChord, matchChord } from "verbr/chord"
+import { keymap, formatChord, matchChord } from "@egildo/verbr/chord"
 const keys = keymap(register, taste, { platform: "mac", on: "row" })
 keys.lookup(event)   // the verb id a key press summons, or undefined; hand it to invoke
 keys.bindings        // every { chord, id }, for a shortcuts sheet
@@ -226,19 +226,19 @@ keys.bindings        // every { chord, id }, for a shortcuts sheet
 
 Chords live in taste as `keys`, one or a list. A chord is spelled the way keymaps spell it: parts split on `-` or `+`, the last part is always the key (`Mod--` is Mod with minus), modifier spellings are read in any case (`Mod`, `Cmd`, `Ctrl`, `Control`, `Alt`, `Option`, `Shift`, `Meta`), and `Mod` is ⌘ on a Mac and Ctrl elsewhere. `formatChord` draws one for a person in the platform's order (⌃⌥⇧⌘ on a Mac, Ctrl+Alt+Shift elsewhere); the projection's `shortcut` is the first chord, drawn. `matchChord` takes anything shaped like a `KeyboardEvent`, matches letters in either case, lets Shift reach a symbol (`Mod-?`), and falls back to the physical key when a modifier changed the character (⌥K on a Mac). The keymap only maps a key press to an id — whether it may run is `invoke`'s question — and two verbs that apply in the same context and claim the same chord are refused when the keymap is built.
 
-## Agents — `verbr/tools`
+## Agents — `@egildo/verbr/tools`
 
 ```ts
-import { manifest } from "verbr/tools"
+import { manifest } from "@egildo/verbr/tools"
 const { tools, idOf } = manifest(project(register, state, taste))
 ```
 
 The projection as a tool manifest, in the Model Context Protocol's shape (`name`, `title`, `description`, `inputSchema`). An agent is offered exactly what a user could press, in the same words, with args as the JSON Schema the projection stated, so it needs no options of its own; withheld verbs are left out unless `includeUnavailable` asks. Verb ids become valid tool names (`todo:add` → `todo_add`), and `idOf` maps a tool call back to the verb for `invoke`. Other providers differ only in spelling — `input_schema`, `parameters` — which is a `map` at the host.
 
-## The Invoker Commands outlet — `verbr/outlet`
+## The Invoker Commands outlet — `@egildo/verbr/outlet`
 
 ```ts
-import { commandName, verbIdOf } from "verbr/outlet"
+import { commandName, verbIdOf } from "@egildo/verbr/outlet"
 commandName("todo:add")   // "--todo:add", for <button command="--todo:add" commandfor="app">
 verbIdOf(event)           // "todo:add", or null for the platform's own commands
 ```
@@ -250,9 +250,9 @@ The Invoker Commands API lets a `<button command="--todo:add">` fire a native `C
 | Import | What it holds |
 | --- | --- |
 | `verbr` | The core: `compose`, `applyTaste`, `project`, `flat`, `prepare`, `invoke`, `evaluate`, `checkArgs`, `argsSchema`, and their types |
-| `verbr/chord` | The keyboard: `keymap`, `formatChord`, `parseChord`, `matchChord` |
-| `verbr/tools` | Agents: `manifest` |
-| `verbr/outlet` | The Invoker Commands API: `commandName`, `verbIdOf` |
+| `@egildo/verbr/chord` | The keyboard: `keymap`, `formatChord`, `parseChord`, `matchChord` |
+| `@egildo/verbr/tools` | Agents: `manifest` |
+| `@egildo/verbr/outlet` | The Invoker Commands API: `commandName`, `verbIdOf` |
 
 ## What it refuses
 

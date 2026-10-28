@@ -1,5 +1,5 @@
 {
-  "name": "verbr",
+  "name": "@egildo/verbr",
   "version": "0.4.0",
   "description": "A command register for any UI over any state: capabilities declared once, taste as a document, every surface — toolbar, menu, palette, keyboard, agent — a projection, one checked door to run them.",
   "keywords": ["commands", "command-palette", "keyboard-shortcuts", "toolbar", "menu", "state-management", "agent-tools", "mcp", "json-schema", "invoker-commands"],
