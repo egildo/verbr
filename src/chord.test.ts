@@ -26,6 +26,22 @@ describe("formatChord", () => {
     expect(formatChord("Option-Cmd-i", "mac")).toBe("⌥⌘I")
     expect(formatChord("c-a-s-Delete", "mac")).toBe("⌃⌥⇧⌦")
   })
+  it("reads Electron's accelerator spelling", () => {
+    expect(formatChord("CommandOrControl+Shift+C", "mac")).toBe("⇧⌘C")
+    expect(formatChord("CmdOrCtrl+R")).toBe("Ctrl+R")
+    expect(formatChord("commandorcontrol+,", "mac")).toBe("⌘,")
+  })
+  it("refuses a part that is neither a modifier nor the key", () => {
+    expect(() => formatChord("Hyper+T", "mac")).toThrow(/chord "Hyper\+T" has unknown modifier "Hyper"/)
+    expect(() => matchChord("Cmmand-t", press("t", { meta: true }), "mac")).toThrow(/unknown modifier "Cmmand"/)
+  })
+  it("draws a key alias as the key it names", () => {
+    expect(formatChord("CommandOrControl+Left", "mac")).toBe("⌘←")
+    expect(formatChord("Up", "mac")).toBe("↑")
+    expect(formatChord("Shift-Esc", "mac")).toBe("⇧⎋")
+    expect(formatChord("Mod-Return", "mac")).toBe("⌘↵")
+    expect(formatChord("Del", "mac")).toBe("⌦")
+  })
   it("treats the last part as the key, even when it spells a modifier's letter", () => {
     expect(formatChord("Mod-s", "mac")).toBe("⌘S")
     expect(formatChord("Shift")).toBe("Shift")

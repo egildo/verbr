@@ -30,11 +30,12 @@ export interface KeyPress {
 
 /**
  * Modifier spellings, case-insensitive. `Mod` and `Cmd` mean the platform's primary modifier (⌘ on a
- * Mac, Ctrl elsewhere); `Meta` is the key itself. The one-letter forms are ProseMirror's and count
- * only before the last part, which is always the key: `Mod-s` is Mod with S, never Mod with Shift.
+ * Mac, Ctrl elsewhere), as do Electron's `CommandOrControl` and `CmdOrCtrl`; `Meta` is the key itself.
+ * The one-letter forms are ProseMirror's and count only before the last part, which is always the
+ * key: `Mod-s` is Mod with S, never Mod with Shift.
  */
 const MODIFIERS: Readonly<Record<string, Modifier | "mod">> = {
-  mod: "mod", cmd: "mod", command: "mod",
+  mod: "mod", cmd: "mod", command: "mod", commandorcontrol: "mod", cmdorctrl: "mod",
   meta: "meta", m: "meta", super: "meta", win: "meta",
   ctrl: "ctrl", control: "ctrl", c: "ctrl",
   alt: "alt", option: "alt", opt: "alt", a: "alt",
@@ -56,7 +57,9 @@ function modifierOf(part: string, platform: Platform): Modifier | undefined {
 
 /**
  * Read a chord for a platform. Parts split on `-` or `+`, except a trailing one, which is the key
- * itself: `Mod--` is Mod with minus, `Ctrl++` is Ctrl with plus.
+ * itself: `Mod--` is Mod with minus, `Ctrl++` is Ctrl with plus. Any other part must be a modifier;
+ * one that is not (`Hyper-t`, `Cmmand-t`) is refused here, so a misspelling fails at build, not at a
+ * key press.
  */
 export function parseChord(chord: string, platform: Platform = "other"): Chord {
   const parts = chord.split(/[-+](?!$)/)
@@ -64,7 +67,8 @@ export function parseChord(chord: string, platform: Platform = "other"): Chord {
   const mods = new Set<Modifier>()
   for (const part of parts) {
     const m = modifierOf(part, platform)
-    if (m) mods.add(m)
+    if (!m) throw new Error(`chord "${chord}" has unknown modifier "${part}"`)
+    mods.add(m)
   }
   return { mods, key }
 }
@@ -79,7 +83,7 @@ export function formatChord(chord: string, platform: Platform = "other"): string
   // A key named like a modifier (`Shift` pressed alone) is drawn as one; a single letter is a key.
   const keyMod = key.length > 1 ? modifierOf(key, platform) : undefined
   const table = platform === "mac" ? MAC_MOD : OTHER_MOD
-  const face = keyMod ? table[keyMod] : (platform === "mac" ? MAC_KEY[key] : undefined) ?? (key.length === 1 ? key.toUpperCase() : key)
+  const face = keyMod ? table[keyMod] : (platform === "mac" ? MAC_KEY[macKeyName(key)] : undefined) ?? (key.length === 1 ? key.toUpperCase() : key)
   if (platform === "mac") return held.map((m) => table[m]).join("") + face
   return [...held.map((m) => table[m]), face].filter(Boolean).join("+")
 }
@@ -87,6 +91,12 @@ export function formatChord(chord: string, platform: Platform = "other"): string
 function canonKey(key: string): string {
   const lower = key.toLowerCase()
   return KEY_ALIASES[lower] ?? lower
+}
+
+/** The {@link MAC_KEY} name an alias stands for, so `Left` draws as `←` like `ArrowLeft`. */
+function macKeyName(key: string): string {
+  const canon = canonKey(key)
+  return Object.keys(MAC_KEY).find((name) => name.toLowerCase() === canon) ?? key
 }
 
 /** The key a physical `code` names, for when a modifier changed what `key` reports (⌥K is `˚` on a Mac). */
