@@ -1,8 +1,19 @@
 {
   "name": "@egildo/verbr",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A command register for any UI over any state: capabilities declared once, taste as a document, every surface — toolbar, menu, palette, keyboard, agent — a projection, one checked door to run them.",
-  "keywords": ["commands", "command-palette", "keyboard-shortcuts", "toolbar", "menu", "state-management", "agent-tools", "mcp", "json-schema", "invoker-commands"],
+  "keywords": [
+    "commands",
+    "command-palette",
+    "keyboard-shortcuts",
+    "toolbar",
+    "menu",
+    "state-management",
+    "agent-tools",
+    "mcp",
+    "json-schema",
+    "invoker-commands"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -32,7 +43,12 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "src", "!src/**/*.test.ts", "*.md"],
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "*.md"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
