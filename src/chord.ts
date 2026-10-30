@@ -75,7 +75,8 @@ export function parseChord(chord: string, platform: Platform = "other"): Chord {
 
 /**
  * `Mod-Enter` → `⌘↵` on a Mac, `Ctrl+Enter` elsewhere. Modifiers are put in the platform's order; a
- * lone letter is upper-cased for display.
+ * lone letter is upper-cased for display; a named key is drawn by its `KeyboardEvent.key` name, so
+ * `Left` and `ArrowLeft`, `Esc` and `Escape`, `Return` and `Enter`, `Del` and `Delete` draw alike.
  */
 export function formatChord(chord: string, platform: Platform = "other"): string {
   const { mods, key } = parseChord(chord, platform)
@@ -83,7 +84,8 @@ export function formatChord(chord: string, platform: Platform = "other"): string
   // A key named like a modifier (`Shift` pressed alone) is drawn as one; a single letter is a key.
   const keyMod = key.length > 1 ? modifierOf(key, platform) : undefined
   const table = platform === "mac" ? MAC_MOD : OTHER_MOD
-  const face = keyMod ? table[keyMod] : (platform === "mac" ? MAC_KEY[macKeyName(key)] : undefined) ?? (key.length === 1 ? key.toUpperCase() : key)
+  const name = keyName(key)
+  const face = keyMod ? table[keyMod] : (platform === "mac" ? MAC_KEY[name] : undefined) ?? (name.length === 1 ? name.toUpperCase() : name)
   if (platform === "mac") return held.map((m) => table[m]).join("") + face
   return [...held.map((m) => table[m]), face].filter(Boolean).join("+")
 }
@@ -93,8 +95,11 @@ function canonKey(key: string): string {
   return KEY_ALIASES[lower] ?? lower
 }
 
-/** The {@link MAC_KEY} name an alias stands for, so `Left` draws as `←` like `ArrowLeft`. */
-function macKeyName(key: string): string {
+/**
+ * The {@link MAC_KEY} name an alias stands for, so `Left` draws as `←` on a Mac and as `ArrowLeft`
+ * elsewhere, exactly like `ArrowLeft`: one key, one face.
+ */
+function keyName(key: string): string {
   const canon = canonKey(key)
   return Object.keys(MAC_KEY).find((name) => name.toLowerCase() === canon) ?? key
 }

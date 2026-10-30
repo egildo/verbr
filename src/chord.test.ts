@@ -42,6 +42,14 @@ describe("formatChord", () => {
     expect(formatChord("Mod-Return", "mac")).toBe("⌘↵")
     expect(formatChord("Del", "mac")).toBe("⌦")
   })
+  it("draws every alias pair alike on both platforms", () => {
+    const pairs = [["CommandOrControl+Left", "CommandOrControl+ArrowLeft"], ["Alt+Up", "Alt+ArrowUp"], ["Ctrl+Esc", "Ctrl+Escape"], ["Ctrl+Return", "Ctrl+Enter"], ["Ctrl+Del", "Ctrl+Delete"], ["down", "ArrowDown"], ["Mod-right", "Mod-ArrowRight"]]
+    for (const platform of ["mac", "other"] as const) {
+      for (const [a, b] of pairs) expect(formatChord(a!, platform)).toBe(formatChord(b!, platform))
+    }
+    expect(formatChord("CommandOrControl+Left")).toBe("Ctrl+ArrowLeft")
+    expect(formatChord("Ctrl+esc")).toBe("Ctrl+Escape")
+  })
   it("treats the last part as the key, even when it spells a modifier's letter", () => {
     expect(formatChord("Mod-s", "mac")).toBe("⌘S")
     expect(formatChord("Shift")).toBe("Shift")
